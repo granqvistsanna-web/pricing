@@ -426,7 +426,7 @@ body:not(.cur-SEK) p.only-foreign{display:block}
     <div><label for="fxGBP">1 GBP = SEK</label><input type="number" id="fxGBP" data-k="settings.fx.GBP" step="0.0001"></div>
   </div>
   <label class="check"><input type="checkbox" id="fxManualOverride" data-k="settings.fxManualOverride"> Manual override</label>
-  <p class="hint" id="fxNote">Fetching rate…</p>
+  <p class="hint" id="fxNote">Fetching rates…</p>
 
   <h3>Presets</h3>
   <div class="bar">
@@ -1085,8 +1085,10 @@ async function loadFx() {
     // base=SEK gives foreign-per-krona; invert so each rate reads "1 X = n SEK"
     const r = await fetch(`https://api.frankfurter.dev/v1/latest?base=SEK&symbols=${FX_CURS.join(",")}`);
     const j = await r.json();
-    if (!j.rates || !FX_CURS.every(c => j.rates[c] > 0)) throw new Error("bad payload");
-    const fx = Object.fromEntries(FX_CURS.map(c => [c, Math.round(1 / j.rates[c] * 1e4) / 1e4]));
+    // take whichever legs came back — one missing currency shouldn't leave the others stale
+    const live = j.rates ? FX_CURS.filter(c => j.rates[c] > 0) : [];
+    if (!live.length) throw new Error("bad payload");
+    const fx = Object.fromEntries(live.map(c => [c, Math.round(1 / j.rates[c] * 1e4) / 1e4]));
     localStorage.setItem(LSFX, JSON.stringify({ fx, date: j.date }));
     if (!S().fxManualOverride) {
       applyFx(fx, j.date);
