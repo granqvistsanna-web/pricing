@@ -9,7 +9,7 @@
 /* ══════════ tokens ══════════ */
 :root{
   color-scheme:light dark;
-  --bg:#f6f5f3; --panel:#fff; --thumb-bg:#fff;
+  --bg:#f6f5f3; --panel:#fff;
   --fill:rgba(0,0,0,.05); --fill-hi:rgba(0,0,0,.085);
   --line:rgba(0,0,0,.11); --hair:rgba(0,0,0,.065);
   --ink:#1b1a18; --dim:#6f6b64;      /* 4.9:1 on --bg; the old #78746d measured 4.3:1 at 12.5px */
@@ -24,7 +24,7 @@
   --ease:cubic-bezier(.32,.72,0,1);
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#121214; --panel:#1c1c1f; --thumb-bg:#3a3a3f;
+  --bg:#121214; --panel:#1c1c1f;
   --fill:rgba(255,255,255,.07); --fill-hi:rgba(255,255,255,.12);
   --line:rgba(255,255,255,.13); --hair:rgba(255,255,255,.08);
   --ink:#ecebe8; --dim:#97938c;
@@ -93,13 +93,18 @@ input,select,button{font:inherit;font-size:15px;color:var(--ink);
 input:not([type=checkbox]):not([type=radio]):not([type=file]),select{
   background:var(--fill);border-color:transparent}
 input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,select:focus{background:var(--panel);border-color:var(--line)}
+/* "+ from rate card" disables itself once every priced rate is in the quote — it has to look it */
+select:disabled{opacity:.5;cursor:default}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input:focus-visible,select:focus-visible{outline-offset:0}
 button{cursor:pointer;background:var(--fill);border-color:transparent;
   font-size:14px;padding:7px 13px;
   display:inline-flex;align-items:center;gap:7px}
-/* one drawn icon family: 24-unit grid, 1.8 stroke, round caps */
-.ic{width:16px;height:16px;flex:0 0 auto;display:block;
+/* one drawn icon family: 24-unit grid, 1.8 stroke, round caps.
+   pointer-events:none is load-bearing, not decoration: the delegated click handler reads
+   e.target.dataset, and without this a click on the glyph targets the <svg>/<use> instead of
+   the button — which silently killed Remove line and Delete rate on a centred click. */
+.ic{width:16px;height:16px;flex:0 0 auto;display:block;pointer-events:none;
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 button:active{transform:scale(.96)}              /* feedback on press, not on release */
 button.primary{background:var(--accent);color:var(--on-accent)}
@@ -286,20 +291,21 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 <div id="quoteView" class="cols">
 <section>
   <h2>Quote</h2>
-  <div class="row" style="gap:14px">
-    <!-- three collapsed pickers instead of three tracks: the row costs one line at any width,
-         and an option label is free again now that only the chosen one is on screen -->
-    <div style="flex:1 1 120px"><label for="qMode">Mode</label>
+  <div class="row">
+    <!-- three collapsed pickers instead of three tracks. min-width so a narrow screen wraps
+         the row instead of squeezing "Retainer" down to "Reta…" — .row>div sets min-width:0,
+         which otherwise lets a select shrink below its own longest option. -->
+    <div style="flex:1 1 110px;min-width:104px"><label for="qMode">Mode</label>
       <select id="qMode" data-k="quote.mode">
         <option value="hourly">Hourly</option>
         <option value="project">Project</option>
         <option value="retainer">Retainer</option>
       </select></div>
-    <div style="flex:0 1 100px"><label for="qCur">Currency</label>
+    <div style="flex:0 1 84px;min-width:68px"><label for="qCur">Currency</label>
       <select id="qCur" data-k="quote.currency">
         <option>SEK</option><option>EUR</option><option>USD</option><option>GBP</option>
       </select></div>
-    <div style="flex:1 1 150px"><label for="qDir">Start from</label>
+    <div style="flex:1 1 130px;min-width:104px"><label for="qDir">Start from</label>
       <select id="qDir" data-k="quote.direction">
         <option value="forward">Hours → price</option>
         <option value="budget">Budget → hours</option>
