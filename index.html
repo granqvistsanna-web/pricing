@@ -321,10 +321,12 @@ body:not(.cur-SEK) p.only-foreign{display:block}
         <label><input type="radio" name="cur" value="GBP" data-k="quote.currency"><span>GBP</span></label>
       </div>
     </fieldset>
-    <fieldset style="flex:0 0 auto"><legend>Direction</legend>
+    <!-- the arrows lived in the option labels and made this the widest control on the row;
+         "Start from" carries the same meaning once, in the legend -->
+    <fieldset style="flex:0 0 auto"><legend>Start from</legend>
       <div class="seg" style="--n:2">
-        <label><input type="radio" name="dir" value="forward" data-k="quote.direction"><span>Hours → price</span></label>
-        <label><input type="radio" name="dir" value="budget" data-k="quote.direction"><span>Budget → hours</span></label>
+        <label><input type="radio" name="dir" value="forward" data-k="quote.direction"><span>Hours</span></label>
+        <label><input type="radio" name="dir" value="budget" data-k="quote.direction"><span>Budget</span></label>
       </div>
     </fieldset>
   </div>
