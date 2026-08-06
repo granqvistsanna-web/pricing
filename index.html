@@ -12,7 +12,7 @@
   --bg:#f6f5f3; --panel:#fff; --thumb-bg:#fff;
   --fill:rgba(0,0,0,.05); --fill-hi:rgba(0,0,0,.085);
   --line:rgba(0,0,0,.11); --hair:rgba(0,0,0,.065);
-  --ink:#1b1a18; --dim:#78746d;
+  --ink:#1b1a18; --dim:#6f6b64;      /* 4.9:1 on --bg; the old #78746d measured 4.3:1 at 12.5px */
   --accent:#0071E3; --accent-ink:#0066CC; --on-accent:#fff;
   --good:#12693f; --warn:#8f5600; --bad:#b3261e; --green-fill:#34C759;
   --tint:7%;
@@ -45,14 +45,18 @@ body{margin:0;background:var(--bg);color:var(--ink);
 main{max-width:1060px;margin:0 auto;padding:0 20px 56px}
 
 /* translucent chrome — content scrolls under it, edge fades instead of a rule */
-header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;
   margin:0 -20px 20px;padding:16px 20px 13px;
   background:var(--glass);backdrop-filter:blur(24px) saturate(180%);
   -webkit-backdrop-filter:blur(24px) saturate(180%)}
 header::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;pointer-events:none;
   background:linear-gradient(var(--glass),transparent)}
-h1{flex:1;margin:0;font-size:19px;font-weight:640;letter-spacing:-.016em;line-height:1.2}
-h1 small{display:block;margin-top:1px;font-size:12.5px;font-weight:400;letter-spacing:0;color:var(--dim)}
+.brand{flex:1;min-width:0}
+h1{margin:0;font-size:19px;font-weight:640;letter-spacing:-.016em;line-height:1.2}
+/* the working document's name — the one thing only the chrome can tell you */
+#quoteLabel{margin:1px 0 0;font-size:12.5px;line-height:1.35;color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#quoteLabel.draft{font-style:italic}
 
 .cols{display:grid;gap:20px;grid-template-columns:1fr}
 @media (min-width:860px){
@@ -84,7 +88,11 @@ input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,select:focus
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input:focus-visible,select:focus-visible{outline-offset:0}
 button{cursor:pointer;background:var(--fill);border-color:transparent;
-  font-size:14px;font-weight:530;padding:7px 13px}
+  font-size:14px;font-weight:530;padding:7px 13px;
+  display:inline-flex;align-items:center;gap:7px}
+/* one drawn icon family: 24-unit grid, 1.8 stroke, round caps */
+.ic{width:16px;height:16px;flex:0 0 auto;display:block;
+  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 button:hover{background:var(--fill-hi)}
 button:active{transform:scale(.96)}              /* feedback on press, not on release */
 button.primary{background:var(--accent);color:var(--on-accent)}
@@ -110,7 +118,9 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 .seg label{margin:0;z-index:1;color:var(--ink);font-size:14px}
 .seg span{display:block;padding:5px 13px;text-align:center;white-space:nowrap;cursor:pointer;
   font-weight:500;color:var(--dim);border-radius:9px;transition:color .2s,transform .1s ease-out}
-.seg input{position:absolute;opacity:0;pointer-events:none}
+/* 1×1 instead of auto: an absolutely-positioned radio stretched to the track width and
+   pushed the whole page into horizontal scroll at 390px */
+.seg input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
 .seg input:checked+span{color:var(--ink);font-weight:590}
 .seg label:active span{transform:scale(.95)}
 .seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-1px}
@@ -198,10 +208,19 @@ body.cur-USD p.only-usd{display:block}
 }
 </style>
 
+<svg hidden aria-hidden="true">
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/><circle cx="15" cy="8" r="2.6"/><circle cx="9" cy="16" r="2.6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+</svg>
+
 <main>
 <header>
-  <h1>Rate &amp; Pricing <small>Your numbers stay in this browser</small></h1>
-  <button id="viewToggle" aria-label="Settings">⚙ Settings</button>
+  <div class="brand">
+    <h1>Rate &amp; Pricing</h1>
+    <p id="quoteLabel"></p>
+  </div>
+  <button id="viewToggle"></button>
 </header>
 
 <!-- ───────────────── first run ───────────────── -->
@@ -590,7 +609,7 @@ function renderLines() {
   // lines are per quote: any of them can be dropped, and one-off lines live on the quote itself
   $("lines").innerHTML = q.lines.map((l, i) => {
     const r = lineRate(s, l);
-    const rm = `<button class="del" data-lrm="${i}" aria-label="Remove ${esc(r.label)} from this quote">✕</button>`;
+    const rm = `<button class="del" data-lrm="${i}" aria-label="Remove ${esc(r.label)} from this quote">${ico("close")}</button>`;
     if (r.custom) return `<div>
       <input class="lbl" data-l="${i}" data-lf="label" aria-label="Line label" value="${esc(r.label)}">
       <input class="rt" type="number" data-l="${i}" data-lf="hourly" step="50" min="0"
@@ -615,7 +634,7 @@ function renderRates() {
       <div style="flex:1 1 80px"><label>Rate/h</label><input type="number" data-f="hourly" aria-label="${esc(r.label)} rate per hour" step="50" value="${r.hourly}"></div>
       <div style="flex:0 1 78px"><label>Cur</label><select data-f="currency" aria-label="${esc(r.label)} currency">
         <option${r.currency === "SEK" ? " selected" : ""}>SEK</option><option${r.currency === "USD" ? " selected" : ""}>USD</option></select></div>
-      <button class="del" data-f="del" aria-label="Remove ${esc(r.label)}">✕</button>
+      <button class="del" data-f="del" aria-label="Remove ${esc(r.label)}">${ico("close")}</button>
     </div>`).join("");
   $("rates").innerHTML = html;
   $("setupRates").innerHTML = html;
@@ -641,6 +660,9 @@ function renderFooter() {
 function render() {
   const s = S(), q = Q(), c = computeQuote(s, q);
   document.body.className = `mode-${q.mode} dir-${q.direction} cur-${q.currency}`;
+  const named = !!q.name;
+  $("quoteLabel").textContent = named ? q.name : "Unsaved quote";
+  $("quoteLabel").className = named ? "" : "draft";
 
   const tr = (label, amt, cls = "") =>
     `<tr class="${cls}"><td>${label}</td><td>${amt === null ? "" : fmt(amt, c.currency)}</td></tr>`;
@@ -669,7 +691,7 @@ function render() {
   // margin: colour AND text, plus an explicit unset state
   if (!c.costSet) {
     $("margin").innerHTML = `<p class="hint">Set your internal cost per hour in
-      <a href="#" id="toSettings">⚙ Settings</a> to see margin and break-even.</p>`;
+      <a href="#" id="toSettings">Settings</a> to see margin and break-even.</p>`;
   } else {
     const cls = c.marginPercent >= s.targetMarginPercent ? "good" : c.marginPercent >= 0 ? "warn" : "bad";
     const mark = cls === "good" ? "✓" : cls === "warn" ? "△" : "✕";
@@ -693,6 +715,7 @@ function render() {
 }
 
 const esc = t => String(t).replace(/[<>&"]/g, ch => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[ch]);
+const ico = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"></use></svg>`;
 
 /* ══════════ copy output ══════════ */
 
@@ -834,7 +857,10 @@ function showView(v) {
   $("quoteView").hidden = setup || v === "settings";
   $("settingsView").hidden = setup || v === "quote";
   $("viewToggle").hidden = setup;
-  $("viewToggle").textContent = v === "settings" ? "← Quote" : "⚙ Settings";
+  $("quoteLabel").hidden = setup;                      // nothing is being quoted yet
+  // the visible label IS the accessible name — a static aria-label would contradict it on the way back
+  $("viewToggle").innerHTML = v === "settings"
+    ? `${ico("back")}<span>Quote</span>` : `${ico("sliders")}<span>Settings</span>`;
 }
 $("viewToggle").onclick = () => showView($("settingsView").hidden ? "settings" : "quote");
 
