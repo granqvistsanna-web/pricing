@@ -106,7 +106,7 @@ button.primary{background:var(--accent);color:var(--on-accent)}
 /* we draw our own press states — iOS's grey tap flash lands on top of them, and control
    labels aren't prose anyone wants to select by accident */
 button,label{-webkit-tap-highlight-color:transparent}
-button,.seg span{-webkit-user-select:none;user-select:none}
+button{-webkit-user-select:none;user-select:none}
 
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
 .row>div{flex:1 1 90px;min-width:0}
@@ -120,25 +120,6 @@ button,.seg span{-webkit-user-select:none;user-select:none}
 .quotebar select{flex:0 1 190px}
 fieldset{border:0;padding:0;margin:0;min-width:0}
 legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
-
-/* segmented control — thumb slides between equal columns, --n = option count */
-.seg{position:relative;display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;
-  max-width:100%;padding:2px;background:var(--fill);border-radius:11px}
-.seg::before{content:"";position:absolute;top:2px;bottom:2px;left:2px;
-  width:calc((100% - 4px)/var(--n,2));background:var(--thumb-bg);border-radius:9px;
-  box-shadow:var(--thumb);transition:transform .34s var(--ease)}
-.seg:has(label:nth-child(2) input:checked)::before{transform:translateX(100%)}
-.seg:has(label:nth-child(3) input:checked)::before{transform:translateX(200%)}
-.seg:has(label:nth-child(4) input:checked)::before{transform:translateX(300%)}
-.seg label{margin:0;z-index:1;color:var(--ink);font-size:14px}
-.seg span{display:block;padding:5px 13px;text-align:center;white-space:nowrap;cursor:pointer;
-  font-weight:500;color:var(--dim);border-radius:9px;transition:color .2s,transform .1s ease-out}
-/* 1×1 instead of auto: an absolutely-positioned radio stretched to the track width and
-   pushed the whole page into horizontal scroll at 390px */
-.seg input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
-.seg input:checked+span{color:var(--ink);font-weight:590}
-.seg label:active span{transform:scale(.95)}
-.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-1px}
 
 .check{display:flex;gap:10px;align-items:center;margin:0;padding:9px 0;
   font-size:15px;color:var(--ink)}
@@ -306,29 +287,23 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 <section>
   <h2>Quote</h2>
   <div class="row" style="gap:14px">
-    <fieldset style="flex:0 0 auto"><legend>Mode</legend>
-      <div class="seg" style="--n:3">
-        <label><input type="radio" name="mode" value="hourly" data-k="quote.mode"><span>Hourly</span></label>
-        <label><input type="radio" name="mode" value="project" data-k="quote.mode"><span>Project</span></label>
-        <label><input type="radio" name="mode" value="retainer" data-k="quote.mode"><span>Retainer</span></label>
-      </div>
-    </fieldset>
-    <fieldset style="flex:0 0 auto"><legend>Currency</legend>
-      <div class="seg" style="--n:4">
-        <label><input type="radio" name="cur" value="SEK" data-k="quote.currency"><span>SEK</span></label>
-        <label><input type="radio" name="cur" value="EUR" data-k="quote.currency"><span>EUR</span></label>
-        <label><input type="radio" name="cur" value="USD" data-k="quote.currency"><span>USD</span></label>
-        <label><input type="radio" name="cur" value="GBP" data-k="quote.currency"><span>GBP</span></label>
-      </div>
-    </fieldset>
-    <!-- the arrows lived in the option labels and made this the widest control on the row;
-         "Start from" carries the same meaning once, in the legend -->
-    <fieldset style="flex:0 0 auto"><legend>Start from</legend>
-      <div class="seg" style="--n:2">
-        <label><input type="radio" name="dir" value="forward" data-k="quote.direction"><span>Hours</span></label>
-        <label><input type="radio" name="dir" value="budget" data-k="quote.direction"><span>Budget</span></label>
-      </div>
-    </fieldset>
+    <!-- three collapsed pickers instead of three tracks: the row costs one line at any width,
+         and an option label is free again now that only the chosen one is on screen -->
+    <div style="flex:1 1 120px"><label for="qMode">Mode</label>
+      <select id="qMode" data-k="quote.mode">
+        <option value="hourly">Hourly</option>
+        <option value="project">Project</option>
+        <option value="retainer">Retainer</option>
+      </select></div>
+    <div style="flex:0 1 100px"><label for="qCur">Currency</label>
+      <select id="qCur" data-k="quote.currency">
+        <option>SEK</option><option>EUR</option><option>USD</option><option>GBP</option>
+      </select></div>
+    <div style="flex:1 1 150px"><label for="qDir">Start from</label>
+      <select id="qDir" data-k="quote.direction">
+        <option value="forward">Hours → price</option>
+        <option value="budget">Budget → hours</option>
+      </select></div>
   </div>
 
   <h3>Hours <span class="eff only-retainer">per month</span></h3>
@@ -729,8 +704,7 @@ function renderInputs() {
   for (const el of document.querySelectorAll("[data-k]")) {
     const v = el.dataset.k.split(".").reduce((o, k) => o[k], db);
     if (el.type === "checkbox") el.checked = !!v;
-    else if (el.type === "radio") el.checked = el.value === v;
-    else el.value = v === null ? "" : v;
+    else el.value = v === null ? "" : v;      // selects included: .value matches the option value
   }
 }
 
