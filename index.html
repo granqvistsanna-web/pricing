@@ -1,0 +1,908 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Rate &amp; Pricing Calculator</title>
+<style>
+:root{
+  --bg:#fafaf9; --panel:#fff; --line:#e5e4e1; --ink:#1c1b19; --dim:#77746e;
+  --accent:#1c1b19; --good:#177245; --warn:#a86400; --bad:#b3261e;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#16161a; --panel:#1e1e23; --line:#32323a; --ink:#eceae6; --dim:#9b978f;
+        --accent:#eceae6; --good:#4ec07f; --warn:#e0a33a; --bad:#f2796d;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.45 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+h1{font-size:18px;margin:0;flex:1}
+h1 small{font-weight:400;color:var(--dim);font-size:13px}
+.cols{display:grid;gap:18px;grid-template-columns:1fr}
+@media (min-width:820px){.cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+h2{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 12px}
+h3{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin:22px 0 8px}
+h3:first-child{margin-top:0}
+label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px}
+input,select,button{font:inherit;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+input[type=number]{font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{cursor:pointer;background:transparent}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.row>div{flex:1 1 90px;min-width:0}
+.row input,.row select{width:100%}
+.bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar select{flex:1 1 160px;min-width:0}
+fieldset{border:0;padding:0;margin:0}
+legend{font-size:12px;color:var(--dim);margin-bottom:4px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;width:fit-content;max-width:100%}
+.seg label{margin:0;color:var(--ink);font-size:14px}
+.seg span{display:block;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked+span{background:var(--accent);color:var(--panel)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:-2px}
+.check{display:flex;gap:7px;align-items:center;font-size:13px;color:var(--ink);margin:0 0 8px}
+.check input{margin:0;flex:0 0 auto}
+.eff{color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hint{font-size:12px;color:var(--dim);margin:2px 0 10px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+td{padding:3px 0;vertical-align:top}
+td+td{text-align:right;white-space:nowrap;padding-left:12px}
+tr.sub td{color:var(--dim);font-size:13px;padding-left:14px}
+tr.rule td{border-top:1px solid var(--line);padding-top:8px}
+tr.total td{font-weight:600;font-size:17px}
+tr.muted td{color:var(--dim);font-size:13px}
+.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.margin-line{font-weight:600;margin:0 0 8px}
+.del{border:0;color:var(--dim);padding:6px 4px;flex:0 0 auto;align-self:flex-end}
+.del:hover{color:var(--bad)}
+.lines{display:grid;gap:6px;margin-bottom:14px}
+.lines div{display:flex;gap:10px;align-items:center}
+.lines label{margin:0;flex:1;color:var(--ink);font-size:14px;min-width:0}
+.lines label span{color:var(--dim);font-size:13px}
+.lines input{width:76px;text-align:right}
+footer{max-width:1040px;margin:0 auto;padding:14px 16px 48px;font-size:12px;color:var(--dim)}
+footer a{color:inherit}
+footer a.nudge{color:var(--warn);font-weight:600}
+[hidden]{display:none!important}
+/* ponytail: display:revert would roll back to the UA value, not to .row{display:flex} — so name the type */
+.only-project,.only-retainer,.only-hourly,.only-budget,.only-usd{display:none}
+body.mode-project .row.only-project,body.mode-retainer .row.only-retainer{display:flex}
+body.mode-hourly label.only-hourly{display:flex}
+body.mode-retainer span.only-retainer{display:inline}
+body.dir-budget div.only-budget{display:block}
+body.cur-USD p.only-usd{display:block}
+.steps{max-width:520px;margin:0 auto}
+pre{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;color:var(--dim)}
+</style>
+
+<main>
+<header>
+  <h1>Rate &amp; Pricing Calculator <small>· your numbers stay in this browser</small></h1>
+  <button id="viewToggle" aria-label="Settings">⚙ Settings</button>
+</header>
+
+<!-- ───────────────── first run ───────────────── -->
+<section id="firstRun" class="steps" hidden>
+  <h2 id="stepLabel">Setup</h2>
+  <fieldset class="step" data-step="1">
+    <legend>1. What do you sell, and at what rate per hour?</legend>
+    <div id="setupRates"></div>
+  </fieldset>
+  <fieldset class="step" data-step="2" hidden>
+    <legend>2. Fixed costs on top of hours.</legend>
+    <div class="row">
+      <div><label for="s_startupFee">Startup fee</label><input type="number" id="s_startupFee" data-k="settings.startupFee" step="100"></div>
+      <div><label for="s_adminPercent">Admin %</label><input type="number" id="s_adminPercent" data-k="settings.adminPercent" step="1"></div>
+    </div>
+    <p class="hint">Admin covers the unbilled hours around the billed ones. Startup fee is the one-time cost of getting an engagement running.</p>
+  </fieldset>
+  <fieldset class="step" data-step="3" hidden>
+    <legend>3. What does an hour cost you?</legend>
+    <div class="row">
+      <div><label for="s_internalCostPerHour">Internal cost / h</label><input type="number" id="s_internalCostPerHour" data-k="settings.internalCostPerHour" step="50"></div>
+      <div><label for="s_targetMarginPercent">Target margin %</label><input type="number" id="s_targetMarginPercent" data-k="settings.targetMarginPercent" step="1"></div>
+    </div>
+    <p class="hint">This powers the margin check — the number that tells you whether a quote is actually worth taking. Without it there is no floor.</p>
+  </fieldset>
+  <div class="bar" style="margin:16px 0 0">
+    <button class="primary" id="stepNext">Next</button>
+    <button id="stepBack" hidden>Back</button>
+    <button id="stepSkip">Skip</button>
+  </div>
+</section>
+
+<!-- ───────────────── quote view ───────────────── -->
+<div id="quoteView" class="cols">
+<section>
+  <h2>Quote</h2>
+  <div class="bar">
+    <select id="savedSel" aria-label="Saved quotes"><option value="">— saved quotes —</option></select>
+    <button id="qSave">Save</button>
+    <button id="qDup">Duplicate</button>
+    <button id="qDel">Delete</button>
+  </div>
+
+  <div class="row" style="gap:14px">
+    <fieldset style="flex:0 0 auto"><legend>Mode</legend>
+      <div class="seg">
+        <label><input type="radio" name="mode" value="hourly" data-k="quote.mode"><span>Hourly</span></label>
+        <label><input type="radio" name="mode" value="project" data-k="quote.mode"><span>Project</span></label>
+        <label><input type="radio" name="mode" value="retainer" data-k="quote.mode"><span>Retainer</span></label>
+      </div>
+    </fieldset>
+    <fieldset style="flex:0 0 auto"><legend>Currency</legend>
+      <div class="seg">
+        <label><input type="radio" name="cur" value="SEK" data-k="quote.currency"><span>SEK</span></label>
+        <label><input type="radio" name="cur" value="USD" data-k="quote.currency"><span>USD</span></label>
+      </div>
+    </fieldset>
+    <fieldset style="flex:0 0 auto"><legend>Direction</legend>
+      <div class="seg">
+        <label><input type="radio" name="dir" value="forward" data-k="quote.direction"><span>→ Price</span></label>
+        <label><input type="radio" name="dir" value="budget" data-k="quote.direction"><span>From budget</span></label>
+      </div>
+    </fieldset>
+  </div>
+
+  <h3>Hours <span class="eff only-retainer">per month</span></h3>
+  <div class="lines" id="lines"></div>
+
+  <div class="row only-project">
+    <div style="flex:0 0 110px"><label for="riskBufferPercent">Risk buffer %</label>
+      <input type="number" id="riskBufferPercent" data-k="quote.riskBufferPercent" step="1"></div>
+    <div class="eff" id="effRisk" style="flex:1 1 auto;padding-bottom:8px"></div>
+  </div>
+  <div class="row only-retainer">
+    <div style="flex:0 0 90px"><label for="retainerMonths">Months</label>
+      <input type="number" id="retainerMonths" data-k="quote.retainerMonths" step="1" min="1"></div>
+    <div style="flex:0 0 130px"><label for="retainerDiscountPercent">Retainer discount %</label>
+      <input type="number" id="retainerDiscountPercent" data-k="quote.retainerDiscountPercent" step="1"></div>
+    <div class="eff" id="effRetainer" style="flex:1 1 auto;padding-bottom:8px"></div>
+  </div>
+  <div class="row">
+    <div style="flex:0 0 110px"><label for="discountPercent">Discount %</label>
+      <input type="number" id="discountPercent" data-k="quote.discountPercent" step="1"></div>
+    <div class="eff" id="effDiscount" style="flex:1 1 auto;padding-bottom:8px"></div>
+  </div>
+
+  <label class="check"><input type="checkbox" id="includeStartupFee" data-k="quote.includeStartupFee">
+    Startup fee <span class="eff" id="effStartup"></span></label>
+  <label class="check"><input type="checkbox" id="vatEnabled" data-k="quote.vatEnabled">
+    Moms <span class="eff" id="effVat"></span></label>
+  <label class="check only-hourly"><input type="checkbox" id="bakeAdmin" data-k="quote.bakeAdmin">
+    Bake admin % into shown hourly rates</label>
+  <p class="hint only-usd">USD quote — Swedish VAT usually doesn't apply; toggle it on if it does.</p>
+
+  <div class="only-budget">
+    <h3>From budget</h3>
+    <div class="row">
+      <div style="flex:0 0 130px"><label for="budgetTarget">Client budget</label>
+        <input type="number" id="budgetTarget" data-k="quote.budgetTarget" step="1000"></div>
+      <div style="flex:0 0 110px"><label for="budgetIncVat">Stated</label>
+        <select id="budgetIncVat" data-k="quote.budgetIncVat">
+          <option value="ex">ex moms</option><option value="inc">ink moms</option></select></div>
+    </div>
+    <p class="hint" id="budgetOut"></p>
+  </div>
+</section>
+
+<section>
+  <h2>Breakdown</h2>
+  <table id="quote"></table>
+  <div class="bar" style="margin:16px 0 0">
+    <button class="primary" id="copyClient">Copy for client</button>
+    <button id="copyInternal">Copy internal</button>
+  </div>
+  <h2 style="margin:26px 0 12px">Margin</h2>
+  <div id="margin"></div>
+</section>
+</div>
+
+<!-- ───────────────── settings view ───────────────── -->
+<div id="settingsView" class="cols" hidden>
+<section>
+  <h3>Rate card</h3>
+  <div id="rates"></div>
+  <button id="addRate">+ add rate</button>
+
+  <h3>Fees &amp; defaults</h3>
+  <div class="row">
+    <div><label for="startupFee">Startup fee (SEK)</label><input type="number" id="startupFee" data-k="settings.startupFee" step="100"></div>
+    <div><label for="adminPercent">Admin %</label><input type="number" id="adminPercent" data-k="settings.adminPercent" step="1"></div>
+    <div><label for="defaultRiskBufferPercent">Default risk %</label><input type="number" id="defaultRiskBufferPercent" data-k="settings.defaultRiskBufferPercent" step="1"></div>
+  </div>
+
+  <h3>Margin floor</h3>
+  <div class="row">
+    <div><label for="internalCostPerHour">Internal cost / h (SEK)</label><input type="number" id="internalCostPerHour" data-k="settings.internalCostPerHour" step="50"></div>
+    <div><label for="targetMarginPercent">Target margin %</label><input type="number" id="targetMarginPercent" data-k="settings.targetMarginPercent" step="1"></div>
+    <div><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1"></div>
+  </div>
+</section>
+
+<section>
+  <h3>Exchange rate</h3>
+  <div class="row">
+    <div style="flex:0 0 130px"><label for="fxRate">1 USD = SEK</label><input type="number" id="fxRate" data-k="settings.fxRate" step="0.0001"></div>
+  </div>
+  <label class="check"><input type="checkbox" id="fxManualOverride" data-k="settings.fxManualOverride"> Manual override</label>
+  <p class="hint" id="fxNote">Fetching rate…</p>
+
+  <h3>Presets</h3>
+  <div class="bar">
+    <select id="presetSel" aria-label="Presets"><option value="">— preset —</option></select>
+    <button id="presetSave">Save as…</button>
+    <button id="presetDel">Delete</button>
+  </div>
+  <p class="hint">A preset is a copy of the rate card, fees and margin floor — e.g. “standard” and “friends &amp; family”.</p>
+
+  <h3>Backup</h3>
+  <div class="bar">
+    <button id="expBtn">Export JSON</button>
+    <button id="impBtn">Import JSON</button>
+    <input type="file" id="impFile" accept="application/json" hidden>
+  </div>
+  <p class="hint">Export contains settings, presets and every saved quote. Import asks before replacing.</p>
+  <p class="hint"><button id="rerunSetup">Re-run first-time setup</button></p>
+</section>
+</div>
+
+<pre id="testout" hidden></pre>
+</main>
+
+<footer>
+  Data stored in this browser only · last change <span id="lastChange">—</span> ·
+  <a href="#" id="footExport">Export backup</a><span id="nudgeNote"></span>
+</footer>
+
+<script>
+"use strict";
+const LS = "pricing.v2", LSFX = "pricing.fx";
+// ponytail: fees and internal cost are stated in SEK — the v2 model dropped baseCurrency,
+// and a SEK-based consultant has no second base to switch to. Rate lines stay per-currency.
+const BASE = "SEK";
+
+const newQuote = s => ({
+  id: null, name: "", createdAt: null, updatedAt: null,
+  mode: "project", currency: "SEK", vatEnabled: true, direction: "forward",
+  lines: s.rates.map(r => ({ rateId: r.id, hours: 0 })),
+  riskBufferPercent: s.defaultRiskBufferPercent, retainerMonths: 6, retainerDiscountPercent: 10,
+  includeStartupFee: true, discountPercent: 0, bakeAdmin: false,
+  budgetTarget: 0, budgetIncVat: "ex",
+});
+
+// ponytail: zeros/nulls on purpose — the committed file must contain no real numbers (public Pages),
+// and empty settings are exactly what triggers first-run setup.
+const defaults = () => {
+  const settings = {
+    fxRate: 9.5, fxRateDate: "", fxManualOverride: false, vatPercent: 25,
+    startupFee: 0, adminPercent: 10, defaultRiskBufferPercent: 15,
+    targetMarginPercent: 30, internalCostPerHour: null, lastSavedAt: null,
+    rates: [
+      { id: 1, label: "Strategy", hourly: 0, currency: "SEK" },
+      { id: 2, label: "Design", hourly: 0, currency: "SEK" },
+      { id: 3, label: "Production", hourly: 0, currency: "SEK" },
+    ],
+  };
+  return { settings, quote: newQuote(settings), quotes: [], presets: {}, changesSinceExport: 0 };
+};
+
+/* ══════════ engine (pure) ══════════ */
+
+const conv = (amt, from, to, fx) => from === to ? amt : (from === "USD" ? amt * fx : amt / fx);
+
+function computeQuote(s, q) {
+  const fx = s.fxRate || 1, D = q.currency;
+  const all = q.lines.map(l => {
+    const r = s.rates.find(r => r.id === l.rateId);
+    if (!r) return null;
+    const hourly = conv(r.hourly || 0, r.currency, D, fx);
+    return { label: r.label, hours: l.hours || 0, hourly, amount: hourly * (l.hours || 0) };
+  }).filter(Boolean);
+  const lines = all.filter(l => l.hours > 0);
+
+  const hours = lines.reduce((a, l) => a + l.hours, 0);
+  const laborCost = lines.reduce((a, l) => a + l.amount, 0);
+  const adminCost = laborCost * s.adminPercent / 100;
+  const startup = q.includeStartupFee ? conv(s.startupFee || 0, BASE, D, fx) : 0;
+  const subtotal = laborCost + adminCost + startup;
+  const months = q.mode === "retainer" ? Math.max(1, q.retainerMonths || 1) : 1;
+
+  let risk = 0, retainerDiscount = 0, monthly = 0, discount = 0, totalExVat = 0;
+  if (q.mode === "retainer") {
+    retainerDiscount = (laborCost + adminCost) * q.retainerDiscountPercent / 100;
+    const afterRet = laborCost + adminCost - retainerDiscount;
+    monthly = afterRet * (1 - q.discountPercent / 100);
+    discount = afterRet * q.discountPercent / 100 * months;
+    totalExVat = monthly * months + startup;
+  } else {
+    risk = q.mode === "project" ? subtotal * q.riskBufferPercent / 100 : 0;
+    discount = (subtotal + risk) * q.discountPercent / 100;
+    totalExVat = subtotal + risk - discount;
+  }
+
+  const vat = q.vatEnabled ? totalExVat * s.vatPercent / 100 : 0;
+  // null or 0 internal cost is "unset" — a real cost per hour is never zero.
+  const costSet = !!s.internalCostPerHour;
+  const costPerHour = costSet ? conv(s.internalCostPerHour, BASE, D, fx) : 0;
+  const internalCost = costPerHour * hours * months;
+  const profit = totalExVat - internalCost;
+
+  return {
+    currency: D, months, lines, all, hours, laborCost, adminCost, startup, subtotal,
+    risk, retainerDiscount, monthly, month1: monthly + startup, discount,
+    totalExVat, vat, totalIncVat: totalExVat + vat,
+    effectiveHourly: hours ? totalExVat / (hours * months) : 0,
+    costSet, costPerHour, internalCost,
+    profit: costSet ? profit : 0,
+    marginPercent: costSet && totalExVat ? profit / totalExVat * 100 : 0,
+    minViableRate: costSet ? costPerHour / (1 - Math.min(99, s.targetMarginPercent) / 100) : 0,
+    breakEvenHours: costPerHour ? totalExVat / costPerHour : null,
+  };
+}
+
+/** Reverse: what does `target` buy? Solves the active mode's formula for hours. */
+function solveBudget(s, q, target, incVat) {
+  const c = computeQuote(s, q), fx = s.fxRate || 1;
+  const targetEx = incVat && q.vatEnabled ? target / (1 + s.vatPercent / 100) : target;
+  // Blend from the hours already entered; with none entered, average the rate card.
+  const rated = c.all.filter(l => l.hourly > 0);
+  const perHour = c.hours ? c.laborCost / c.hours
+    : rated.length ? rated.reduce((a, l) => a + l.hourly, 0) / rated.length : 0;
+  if (!perHour) return { hours: 0, perHour: 0, perLine: [], impossible: true };
+
+  const a = 1 + s.adminPercent / 100, d = 1 - q.discountPercent / 100;
+  let hours;
+  if (q.mode === "retainer") {
+    const rd = 1 - q.retainerDiscountPercent / 100;
+    hours = (targetEx - c.startup) / (perHour * a * rd * d * c.months);
+  } else {
+    const r = 1 + (q.mode === "project" ? q.riskBufferPercent / 100 : 0);
+    hours = (targetEx / (r * d) - c.startup) / (perHour * a);
+  }
+  const share = c.hours ? c.lines.map(l => ({ label: l.label, hours: hours * l.hours / c.hours })) : [];
+  return { hours: Math.max(0, hours), perHour, perLine: share, targetEx, impossible: hours <= 0 };
+}
+
+/** Internal breakdown as [label, amount, isSub] rows — shared by the table and the internal copy. */
+function breakdownRows(s, q, c) {
+  const bake = q.mode === "hourly" && q.bakeAdmin, k = 1 + s.adminPercent / 100;
+  const rows = [["Labor", bake ? c.laborCost * k : c.laborCost, false]];
+  for (const l of c.lines)
+    rows.push([`${l.label} ${l.hours} h × ${fmt(bake ? l.hourly * k : l.hourly, c.currency)}`,
+      bake ? l.amount * k : l.amount, true]);
+  if (!bake) rows.push([`Admin ${s.adminPercent}%`, c.adminCost, false]);
+  if (c.startup) rows.push([q.mode === "retainer" ? "Startup fee (month 1)" : "Startup fee", c.startup, false]);
+  if (c.retainerDiscount) rows.push([`Retainer discount ${q.retainerDiscountPercent}%`, -c.retainerDiscount, false]);
+  if (c.risk) rows.push([`Risk buffer ${q.riskBufferPercent}%`, c.risk, false]);
+  if (c.discount) rows.push([`Discount ${q.discountPercent}%`, -c.discount, false]);
+  return rows;
+}
+
+/** Client-facing lines: admin + risk folded into each hourly rate, discounts kept visible.
+ *  Amounts are rounded per line and the totals summed from the rounded lines, so the
+ *  document a client adds up by hand is internally consistent. */
+function clientRows(s, q, c) {
+  const round = n => c.currency === "SEK" ? Math.round(n) : Math.round(n * 100) / 100;
+  const grossUp = c.laborCost
+    ? (c.laborCost + c.adminCost + c.risk * (c.laborCost + c.adminCost) / (c.subtotal || 1)) / c.laborCost
+    : 1;
+  const riskOnStartup = c.startup && c.subtotal ? c.risk * c.startup / c.subtotal : 0;
+  const lines = c.lines.map(l => {
+    const amount = round(l.amount * grossUp);
+    return { label: l.label, hours: l.hours, hourly: l.hours ? round(amount / l.hours) : 0, amount };
+  });
+  const startup = round(c.startup + riskOnStartup);
+  const labor = lines.reduce((a, l) => a + l.amount, 0);
+  return { lines, startup, labor, gross: labor + (q.mode === "retainer" ? 0 : startup), round };
+}
+
+/** Client-doc totals, derived from the ROUNDED client lines so the document adds up by hand. */
+function clientTotals(s, q, c, cr) {
+  const R = cr.round, rows = [];
+  const vat = ex => q.vatEnabled ? R(ex * s.vatPercent / 100) : 0;
+  if (q.mode === "retainer") {
+    let monthly = cr.labor;                            // discounts stay visible — they sell the retainer
+    if (c.retainerDiscount) {
+      const rd = R(-cr.labor * q.retainerDiscountPercent / 100);
+      rows.push(["retainer", rd]); monthly += rd;
+    }
+    if (q.discountPercent) {
+      const d = R(-monthly * q.discountPercent / 100);
+      rows.push(["adhoc", d]); monthly += d;
+    }
+    const exVat = monthly * c.months + cr.startup;
+    return { rows, monthly, month1: monthly + cr.startup, exVat, vat: vat(exVat) };
+  }
+  let exVat = cr.gross;
+  if (c.discount) { const d = R(-c.discount); rows.push(["adhoc", d]); exVat += d; }
+  return { rows, monthly: 0, month1: 0, exVat, vat: vat(exVat) };
+}
+
+/* ══════════ formatting ══════════ */
+
+const fmt = (n, cur) => new Intl.NumberFormat(cur === "SEK" ? "sv-SE" : "en-US",
+  { style: "currency", currency: cur, maximumFractionDigits: cur === "SEK" ? 0 : 2 }).format(n || 0);
+const signed = (n, cur) => (n > 0 ? "+" : "") + fmt(n, cur);
+const pct = n => (Math.round(n * 10) / 10).toLocaleString("sv-SE") + " %";
+const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; };
+const hrs = n => (Math.round(n * 10) / 10).toLocaleString("sv-SE") + " h";
+const when = iso => iso ? new Intl.DateTimeFormat("sv-SE",
+  { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso)) : "—";
+
+/* ══════════ state ══════════ */
+
+let db = defaults();
+try {
+  const saved = JSON.parse(localStorage.getItem(LS) || "null");
+  if (saved) db = Object.assign(defaults(), saved);
+} catch {}
+const S = () => db.settings, Q = () => db.quote;
+const $ = id => document.getElementById(id);
+
+function save() {
+  db.settings.lastSavedAt = new Date().toISOString();
+  db.changesSinceExport = (db.changesSinceExport || 0) + 1;
+  localStorage.setItem(LS, JSON.stringify(db));
+  renderFooter();
+}
+const setPath = (path, v) => {
+  const p = path.split("."), last = p.pop();
+  p.reduce((o, k) => o[k], db)[last] = v;
+};
+
+/* ══════════ render ══════════ */
+
+function renderLines() {
+  const s = S(), q = Q();
+  $("lines").innerHTML = s.rates.map(r => {
+    const h = (q.lines.find(l => l.rateId === r.id) || {}).hours || 0;
+    return `<div><label for="h${r.id}">${esc(r.label)}
+      <span>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fxRate || 1), q.currency)}</span></label>
+      <input type="number" id="h${r.id}" data-h="${r.id}" step="1" min="0" value="${h}"></div>`;
+  }).join("") || `<p class="hint">No rates yet — add them in ⚙ Settings.</p>`;
+}
+
+function renderRates() {
+  const html = S().rates.map((r, i) => `
+    <div class="row" data-r="${i}">
+      <div style="flex:2 1 110px"><label>Label</label><input data-f="label" aria-label="Rate label" value="${esc(r.label)}"></div>
+      <div style="flex:1 1 80px"><label>Rate/h</label><input type="number" data-f="hourly" aria-label="${esc(r.label)} rate per hour" step="50" value="${r.hourly}"></div>
+      <div style="flex:0 1 78px"><label>Cur</label><select data-f="currency" aria-label="${esc(r.label)} currency">
+        <option${r.currency === "SEK" ? " selected" : ""}>SEK</option><option${r.currency === "USD" ? " selected" : ""}>USD</option></select></div>
+      <button class="del" data-f="del" aria-label="Remove ${esc(r.label)}">✕</button>
+    </div>`).join("");
+  $("rates").innerHTML = html;
+  $("setupRates").innerHTML = html;
+}
+
+function renderInputs() {
+  for (const el of document.querySelectorAll("[data-k]")) {
+    const v = el.dataset.k.split(".").reduce((o, k) => o[k], db);
+    if (el.type === "checkbox") el.checked = !!v;
+    else if (el.type === "radio") el.checked = el.value === v;
+    else el.value = v === null ? "" : v;
+  }
+}
+
+function renderFooter() {
+  $("lastChange").textContent = when(S().lastSavedAt);
+  // ponytail: every keystroke counts as a change, so 10 would nudge within the first minute — 20 stays quiet
+  const stale = (db.changesSinceExport || 0) >= 20;
+  $("footExport").className = stale ? "nudge" : "";
+  $("nudgeNote").textContent = stale ? ` · ${db.changesSinceExport} changes since your last export` : "";
+}
+
+function render() {
+  const s = S(), q = Q(), c = computeQuote(s, q);
+  document.body.className = `mode-${q.mode} dir-${q.direction} cur-${q.currency}`;
+
+  const tr = (label, amt, cls = "") =>
+    `<tr class="${cls}"><td>${label}</td><td>${amt === null ? "" : fmt(amt, c.currency)}</td></tr>`;
+  let html = breakdownRows(s, q, c).map(([l, a, sub]) => tr(l, a, sub ? "sub" : "")).join("");
+  if (q.mode === "retainer") {
+    html += tr("Month 1 (incl. startup)", c.month1, "rule total");
+    html += tr("Months 2+", c.monthly, "");
+    html += tr(`Contract value · ${c.months} mo ex moms`, c.totalExVat, "");
+  } else {
+    html += tr("Total ex moms", c.totalExVat, "rule total");
+  }
+  if (q.vatEnabled) {
+    html += tr(`Moms ${s.vatPercent}%`, c.vat, "muted");
+    html += tr("Total ink moms", c.totalIncVat, "muted");
+  }
+  if (c.hours) html += tr(`Effective rate · ${c.hours} h${q.mode === "retainer" ? "/mo" : ""}`, c.effectiveHourly, "muted");
+  $("quote").innerHTML = html;
+
+  // percentage inputs show their money effect
+  $("effRisk").textContent = c.risk ? `→ ${signed(c.risk, c.currency)}` : "";
+  $("effRetainer").textContent = c.retainerDiscount ? `→ ${signed(-c.retainerDiscount, c.currency)}/mo` : "";
+  $("effDiscount").textContent = c.discount ? `→ ${signed(-c.discount, c.currency)}` : "";
+  $("effStartup").textContent = q.includeStartupFee ? `→ ${signed(c.startup, c.currency)}` : "";
+  $("effVat").textContent = q.vatEnabled ? `${s.vatPercent}% → ${signed(c.vat, c.currency)}` : `${s.vatPercent}% — off`;
+
+  // margin: colour AND text, plus an explicit unset state
+  if (!c.costSet) {
+    $("margin").innerHTML = `<p class="hint">Set your internal cost per hour in
+      <a href="#" id="toSettings">⚙ Settings</a> to see margin and break-even.</p>`;
+  } else {
+    const cls = c.marginPercent >= s.targetMarginPercent ? "good" : c.marginPercent >= 0 ? "warn" : "bad";
+    const mark = cls === "good" ? "✓" : cls === "warn" ? "△" : "✕";
+    const verdict = cls === "good" ? `above your ${s.targetMarginPercent} % target`
+      : cls === "warn" ? `below your ${s.targetMarginPercent} % target` : "losing money";
+    let m = `<p class="margin-line ${cls}">${mark} ${pct(c.marginPercent)} — ${verdict}</p><table>` +
+      tr("Revenue ex moms", c.totalExVat) + tr("Internal cost", c.internalCost) + tr("Profit", c.profit, "rule") +
+      tr(`Target ${s.targetMarginPercent} % needs ≥`, c.minViableRate, "muted");
+    if (q.mode !== "retainer" && c.breakEvenHours !== null)
+      m += `<tr class="muted"><td>Break-even</td><td>${hrs(c.breakEvenHours)}${c.hours ? ` (you estimated ${hrs(c.hours)})` : ""}</td></tr>`;
+    $("margin").innerHTML = m + "</table>";
+  }
+
+  if (q.direction === "budget") {
+    const b = solveBudget(s, q, q.budgetTarget || 0, q.budgetIncVat === "inc");
+    const per = b.perLine.length ? " · " + b.perLine.map(l => `${l.label} ${hrs(l.hours)}`).join(", ") : "";
+    $("budgetOut").textContent = !q.budgetTarget ? "Enter a budget to see what it buys."
+      : b.impossible ? `${fmt(q.budgetTarget, c.currency)} doesn't cover the fixed costs — nothing left for hours.`
+      : `${fmt(b.targetEx, c.currency)} ex moms ≈ ${hrs(b.hours)}${q.mode === "retainer" ? "/month" : ""} at ${fmt(b.perHour, c.currency)}/h blended${per}`;
+  }
+}
+
+const esc = t => String(t).replace(/[<>&"]/g, ch => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[ch]);
+
+/* ══════════ copy output ══════════ */
+
+const W = 22, W2 = 20, pad = (l, q, a) => l.padEnd(W) + String(q).padEnd(W2) + a.padStart(13);
+
+function clientText() {
+  const s = S(), q = Q(), c = computeQuote(s, q), cr = clientRows(s, q, c), cur = c.currency;
+  const sv = cur === "SEK";
+  const T = sv
+    ? { head: "Offert", startup: "Uppstart", disc: "Rabatt", sub: "Summa exkl. moms", vat: `Moms ${s.vatPercent} %`, inc: "Summa inkl. moms", m1: "Månad 1", m2: "Månad 2 och framåt", tot: n => `Totalt ${n} månader`, h: "h ×", mo: "mån" }
+    : { head: "Quote", startup: "Setup fee", disc: "Discount", sub: "Subtotal", vat: `VAT ${s.vatPercent}%`, inc: "Total", m1: "Month 1", m2: "Month 2 onward", tot: n => `Total, ${n} months`, h: "h ×", mo: "mo" };
+  const out = [T.head + (q.name ? " — " + q.name : ""), ""];
+  for (const l of cr.lines) out.push(pad(l.label, `${l.hours} ${T.h} ${fmt(l.hourly, cur)}`, fmt(l.amount, cur)));
+
+  const t = clientTotals(s, q, c, cr);
+  const discLine = ([kind, v]) => kind === "retainer"
+    ? pad(`${T.disc} ${q.retainerDiscountPercent} %`, `${c.months} ${T.mo}`, fmt(v, cur))
+    : pad(`${T.disc} ${q.discountPercent} %`, "", fmt(v, cur));
+
+  if (q.mode === "retainer") {
+    for (const r of t.rows) out.push(discLine(r));
+    out.push("", pad(T.m1, "", fmt(t.month1, cur)), pad(T.m2, "", fmt(t.monthly, cur)),
+      pad(T.tot(c.months), "", fmt(t.exVat, cur)));
+  } else {
+    if (cr.startup) out.push(pad(T.startup, "", fmt(cr.startup, cur)));
+    out.push("", pad(T.sub, "", fmt(cr.gross, cur)));
+    for (const r of t.rows) out.push(discLine(r));
+    if (t.rows.length) out.push(pad(T.sub, "", fmt(t.exVat, cur)));
+  }
+  if (q.vatEnabled) out.push(pad(T.vat, "", fmt(t.vat, cur)), pad(T.inc, "", fmt(t.exVat + t.vat, cur)));
+  return out.join("\n");
+}
+
+function internalText() {
+  const s = S(), q = Q(), c = computeQuote(s, q), cur = c.currency;
+  const line = (l, a) => l.padEnd(W + W2) + fmt(a, cur).padStart(13);
+  const out = [`Internal — ${q.name || "unnamed"} · ${q.mode} · ${cur}`, ""];
+  for (const [l, a, sub] of breakdownRows(s, q, c)) out.push(line((sub ? "  " : "") + l, a));
+  out.push("-".repeat(W + W2 + 13));
+  if (q.mode === "retainer")
+    out.push(line("Month 1", c.month1), line("Months 2+", c.monthly), line(`Contract value ${c.months} mo ex moms`, c.totalExVat));
+  else out.push(line("Total ex moms", c.totalExVat));
+  if (q.vatEnabled) out.push(line(`Moms ${s.vatPercent}%`, c.vat), line("Total ink moms", c.totalIncVat));
+  if (c.hours) out.push(line(`Effective rate (${c.hours} h)`, c.effectiveHourly));
+  if (c.costSet) {
+    out.push("", line("Internal cost", c.internalCost), line("Profit", c.profit),
+      `Margin`.padEnd(W + W2) + pct(c.marginPercent).padStart(13));
+    if (q.mode !== "retainer" && c.breakEvenHours !== null)
+      out.push("Break-even".padEnd(W + W2) + hrs(c.breakEvenHours).padStart(13));
+  }
+  return out.join("\n");
+}
+
+async function copy(btn, text) {
+  const label = btn.dataset.label || (btn.dataset.label = btn.textContent);
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied ✓"; }
+  catch { btn.textContent = "Copy failed"; }
+  setTimeout(() => btn.textContent = label, 1300);
+}
+
+/* ══════════ events ══════════ */
+
+document.addEventListener("input", e => {
+  const el = e.target, row = el.closest("[data-r]");
+  if (el.dataset.h) {                                    // hours on the quote view
+    const id = +el.dataset.h, l = Q().lines.find(l => l.rateId === id);
+    if (l) l.hours = num(el.value); else Q().lines.push({ rateId: id, hours: num(el.value) });
+  } else if (row && el.dataset.f) {                      // rate card editor
+    const r = S().rates[+row.dataset.r];
+    r[el.dataset.f] = el.type === "number" ? num(el.value) : el.value;
+    renderRates0(el, row);
+    renderLines();
+  } else if (el.dataset.k) {
+    const wasCur = Q().currency;
+    setPath(el.dataset.k, el.type === "checkbox" ? el.checked
+      : el.type === "number" ? (el.value === "" ? null : num(el.value)) : el.value);
+    if (el.dataset.k === "quote.currency" && Q().currency !== wasCur) {
+      Q().vatEnabled = Q().currency === "SEK";            // §7: USD quotes default to no Swedish VAT
+      renderInputs(); renderLines();
+    }
+    if (el.dataset.k === "settings.fxRate" || el.dataset.k === "settings.fxManualOverride") { renderLines(); fxNote(S().fxRateDate, true); }
+  } else return;
+  save(); render();
+});
+
+/** Keep the twin rate-card editors (settings + first-run) in sync without stealing focus. */
+function renderRates0(el, row) {
+  const other = (el.closest("#rates") ? $("setupRates") : $("rates"));
+  const twin = other.querySelector(`[data-r="${row.dataset.r}"] [data-f="${el.dataset.f}"]`);
+  if (twin) twin.value = el.value;
+}
+
+document.addEventListener("click", e => {
+  if (e.target.id === "toSettings") { e.preventDefault(); showView("settings"); return; }
+  if (e.target.dataset.f !== "del") return;
+  const i = +e.target.closest("[data-r]").dataset.r, id = S().rates[i].id;
+  S().rates.splice(i, 1);
+  Q().lines = Q().lines.filter(l => l.rateId !== id);
+  save(); renderRates(); renderLines(); render();
+});
+
+$("addRate").onclick = () => {
+  const id = Math.max(0, ...S().rates.map(r => r.id)) + 1;
+  S().rates.push({ id, label: "New rate", hourly: 0, currency: BASE });
+  Q().lines.push({ rateId: id, hours: 0 });
+  save(); renderRates(); renderLines(); render();
+};
+
+$("copyClient").onclick = e => copy(e.target, clientText());
+$("copyInternal").onclick = e => copy(e.target, internalText());
+
+/* views */
+function showView(v) {
+  const setup = v === "setup";
+  $("firstRun").hidden = !setup;
+  $("quoteView").hidden = setup || v === "settings";
+  $("settingsView").hidden = setup || v === "quote";
+  $("viewToggle").hidden = setup;
+  $("viewToggle").textContent = v === "settings" ? "← Quote" : "⚙ Settings";
+}
+$("viewToggle").onclick = () => showView($("settingsView").hidden ? "settings" : "quote");
+
+/* first-run: three steps, skippable, never shown again once settings exist */
+let step = 1;
+function renderStep() {
+  for (const f of document.querySelectorAll(".step")) f.hidden = +f.dataset.step !== step;
+  $("stepLabel").textContent = `Setup — step ${step} of 3`;
+  $("stepBack").hidden = step === 1;
+  $("stepNext").textContent = step === 3 ? "Done" : "Next";
+}
+$("stepNext").onclick = () => { if (step === 3) finishSetup(); else { step++; renderStep(); } };
+$("stepBack").onclick = () => { step--; renderStep(); };
+$("stepSkip").onclick = () => finishSetup();
+function finishSetup() { save(); renderLines(); renderInputs(); render(); showView("quote"); }
+$("rerunSetup").onclick = () => { step = 1; renderStep(); showView("setup"); };
+
+/* saved quotes */
+function renderSaved() {
+  $("savedSel").innerHTML = '<option value="">— saved quotes —</option>' + db.quotes.map(q => {
+    const t = computeQuote(S(), q);
+    return `<option value="${q.id}"${q.id === Q().id ? " selected" : ""}>${esc(q.name)} · ${when(q.updatedAt)} · ${q.mode} · ${fmt(t.totalExVat, t.currency)}</option>`;
+  }).join("");
+}
+function persistQuote(name) {
+  const q = Q(), now = new Date().toISOString();
+  Object.assign(q, { name, updatedAt: now, createdAt: q.createdAt || now, id: q.id || Date.now().toString(36) });
+  const i = db.quotes.findIndex(x => x.id === q.id);
+  const copy = JSON.parse(JSON.stringify(q));
+  if (i >= 0) db.quotes[i] = copy; else db.quotes.push(copy);
+  save(); renderSaved();
+}
+$("qSave").onclick = () => {
+  const name = prompt("Quote name", Q().name || "");
+  if (name) persistQuote(name);
+};
+$("qDup").onclick = () => {
+  const name = prompt("Name for the duplicate", (Q().name || "Quote") + " (copy)");
+  if (!name) return;                                  // cancel must not orphan the loaded quote
+  Object.assign(Q(), { id: null, createdAt: null });
+  persistQuote(name);
+};
+$("qDel").onclick = () => {
+  const q = Q(), i = db.quotes.findIndex(x => x.id === q.id);
+  if (i < 0) return alert("This quote isn't saved yet.");
+  if (!confirm(`Delete "${q.name}"?`)) return;
+  db.quotes.splice(i, 1);
+  db.quote = newQuote(S());
+  save(); renderSaved(); renderInputs(); renderLines(); render();
+};
+$("savedSel").onchange = e => {
+  const q = db.quotes.find(x => x.id === e.target.value);
+  if (!q) return;
+  db.quote = Object.assign(newQuote(S()), JSON.parse(JSON.stringify(q)));
+  save(); renderInputs(); renderLines(); render();
+};
+
+/* presets: named copies of the rate card + fees */
+const PRESET_KEYS = ["rates", "startupFee", "adminPercent", "defaultRiskBufferPercent", "internalCostPerHour", "targetMarginPercent"];
+function renderPresets() {
+  $("presetSel").innerHTML = '<option value="">— preset —</option>' +
+    Object.keys(db.presets).map(n => `<option>${esc(n)}</option>`).join("");
+}
+$("presetSave").onclick = () => {
+  const name = prompt("Preset name", $("presetSel").value || "standard");
+  if (!name) return;
+  db.presets[name] = JSON.parse(JSON.stringify(Object.fromEntries(PRESET_KEYS.map(k => [k, S()[k]]))));
+  save(); renderPresets(); $("presetSel").value = name;
+};
+$("presetDel").onclick = () => {
+  const n = $("presetSel").value;
+  if (n && confirm(`Delete preset "${n}"?`)) { delete db.presets[n]; save(); renderPresets(); }
+};
+$("presetSel").onchange = e => {
+  const p = db.presets[e.target.value];
+  if (!p) return;
+  Object.assign(S(), JSON.parse(JSON.stringify(p)));
+  Q().lines = S().rates.map(r => ({ rateId: r.id, hours: (Q().lines.find(l => l.rateId === r.id) || {}).hours || 0 }));
+  save(); renderRates(); renderInputs(); renderLines(); render();
+};
+
+/* backup */
+function doExport() {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: "application/json" }));
+  a.download = `pricing-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  db.changesSinceExport = 0;
+  localStorage.setItem(LS, JSON.stringify(db));
+  renderFooter();
+}
+$("expBtn").onclick = doExport;
+$("footExport").onclick = e => { e.preventDefault(); doExport(); };
+$("impBtn").onclick = () => $("impFile").click();
+$("impFile").onchange = async e => {
+  try {
+    const data = JSON.parse(await e.target.files[0].text());
+    if (!data.settings || !Array.isArray(data.settings.rates)) throw new Error("not a backup file");
+    const n = (data.quotes || []).length;
+    if (!confirm(`Replace current settings, presets and quotes with this file (${n} saved quote${n === 1 ? "" : "s"})?`)) return;
+    db = Object.assign(defaults(), data);
+    save(); renderPresets(); renderSaved(); renderRates(); renderInputs(); renderLines(); render();
+  } catch (err) { alert("Import failed: " + err.message); }
+  finally { e.target.value = ""; }
+};
+
+/* ══════════ FX ══════════ */
+
+function fxNote(date, cached) {
+  $("fxNote").textContent = S().fxManualOverride ? "Manual rate — the live rate is ignored."
+    : date ? `1 USD = ${S().fxRate} SEK · ECB ${date}${cached ? " (cached)" : ""}`
+    : "No live rate yet — enter it manually.";
+}
+async function loadFx() {
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(LSFX) || "null"); } catch {}
+  if (cached && !S().fxManualOverride) {
+    Object.assign(S(), { fxRate: cached.rate, fxRateDate: cached.date });
+    renderInputs(); renderLines(); render(); fxNote(cached.date, true);
+  }
+  try {
+    const r = await fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=SEK");
+    const j = await r.json();
+    if (!j.rates || !j.rates.SEK) throw new Error("bad payload");
+    localStorage.setItem(LSFX, JSON.stringify({ rate: j.rates.SEK, date: j.date }));
+    if (!S().fxManualOverride) {
+      Object.assign(S(), { fxRate: j.rates.SEK, fxRateDate: j.date });
+      localStorage.setItem(LS, JSON.stringify(db));   // not a user edit — no export nudge
+      renderInputs(); renderLines(); render();
+    }
+    fxNote(j.date, false);
+  } catch { fxNote(cached && cached.date, true); }
+}
+
+/* ══════════ self-check: ?test ══════════ */
+
+function selfCheck() {
+  const out = [];
+  const ok = (name, got, want, tol = 0.01) => {
+    const pass = Math.abs(got - want) <= tol;
+    out.push(`${pass ? "PASS" : "FAIL"} ${name}: ${got} ${pass ? "==" : "!="} ${want}`);
+    if (!pass) throw new Error(name);
+  };
+  const s = {
+    fxRate: 10, vatPercent: 25, startupFee: 5000, adminPercent: 10,
+    defaultRiskBufferPercent: 15, targetMarginPercent: 30, internalCostPerHour: 500,
+    rates: [{ id: 1, label: "A", hourly: 1000, currency: "SEK" }],
+  };
+  const q = {
+    mode: "project", currency: "SEK", vatEnabled: true, direction: "forward",
+    lines: [{ rateId: 1, hours: 10 }], riskBufferPercent: 15, retainerMonths: 6,
+    retainerDiscountPercent: 10, includeStartupFee: true, discountPercent: 0, bakeAdmin: false,
+  };
+  let c = computeQuote(s, q);
+  ok("labor", c.laborCost, 10000); ok("admin", c.adminCost, 1000); ok("subtotal", c.subtotal, 16000);
+  ok("risk", c.risk, 2400); ok("project ex vat", c.totalExVat, 18400);
+  ok("vat", c.vat, 4600); ok("inc vat", c.totalIncVat, 23000);
+  ok("internal cost", c.internalCost, 5000); ok("profit", c.profit, 13400);
+  ok("margin %", c.marginPercent, 72.826); ok("min viable rate", c.minViableRate, 714.29);
+  ok("break-even h", c.breakEvenHours, 36.8);
+
+  c = computeQuote(s, { ...q, vatEnabled: false });
+  ok("vat off", c.vat, 0); ok("vat off total", c.totalIncVat, 18400);
+
+  c = computeQuote(s, { ...q, discountPercent: 10 });
+  ok("discount", c.discount, 1840); ok("after discount", c.totalExVat, 16560);
+
+  c = computeQuote(s, { ...q, mode: "retainer" });
+  ok("retainer discount", c.retainerDiscount, 1100); ok("months 2+", c.monthly, 9900);
+  ok("month 1", c.month1, 14900); ok("contract value", c.totalExVat, 64400);
+  ok("retainer cost", c.internalCost, 30000);
+
+  c = computeQuote(s, { ...q, mode: "hourly" });
+  ok("hourly ex vat", c.totalExVat, 16000); ok("effective hourly", c.effectiveHourly, 1600);
+
+  c = computeQuote(s, { ...q, currency: "USD", vatEnabled: false });
+  ok("usd labor", c.laborCost, 1000); ok("usd startup", c.startup, 500); ok("usd ex vat", c.totalExVat, 1840);
+
+  c = computeQuote({ ...s, rates: [{ id: 1, label: "A", hourly: 100, currency: "USD" }] }, q);
+  ok("mixed-currency labor", c.laborCost, 10000);
+
+  // unset internal cost must not fake a 100% margin
+  c = computeQuote({ ...s, internalCostPerHour: null }, q);
+  ok("unset margin", c.marginPercent, 0); ok("unset flag", c.costSet ? 1 : 0, 0);
+  c = computeQuote({ ...s, internalCostPerHour: 0 }, q);
+  ok("zero cost is unset", c.costSet ? 1 : 0, 0);
+
+  // reverse solver round-trips through every mode
+  for (const mode of ["project", "hourly", "retainer"]) {
+    const qq = { ...q, mode, discountPercent: 10 };
+    const t = computeQuote(s, qq).totalExVat;
+    ok(`budget round-trip ${mode}`, solveBudget(s, qq, t, false).hours, 10, 0.001);
+    ok(`budget inc-vat ${mode}`, solveBudget(s, qq, t * 1.25, true).hours, 10, 0.001);
+  }
+  ok("budget below fixed costs", solveBudget(s, q, 1000, false).impossible ? 1 : 0, 1);
+
+  // client doc must add up from its own printed lines, and land on the same total as the internal one
+  const s2 = { ...s, rates: [{ id: 1, label: "A", hourly: 1600, currency: "SEK" }, { id: 2, label: "B", hourly: 1200, currency: "SEK" }] };
+  const q2 = { ...q, lines: [{ rateId: 1, hours: 20 }, { rateId: 2, hours: 40 }] };
+  const c2 = computeQuote(s2, q2), cr = clientRows(s2, q2, c2);
+  ok("client lines sum to gross", cr.labor + cr.startup, cr.gross, 0.5);
+  ok("client gross ≈ internal total", cr.gross, c2.totalExVat, 2);
+  for (const l of cr.lines) ok(`client line ${l.label} rate × hours`, l.hourly * l.hours, l.amount, l.hours / 2 + 0.5);
+  for (const mode of ["project", "hourly", "retainer"]) {
+    for (const disc of [0, 10]) {
+      const qq = { ...q2, mode, discountPercent: disc };
+      const cc = computeQuote(s2, qq), t = clientTotals(s2, qq, cc, clientRows(s2, qq, cc));
+      ok(`client total ${mode} disc${disc}`, t.exVat, cc.totalExVat, 6);
+      ok(`client vat ${mode} disc${disc}`, t.exVat + t.vat, cc.totalIncVat, 8);
+    }
+  }
+  const cRet = computeQuote(s2, { ...q2, mode: "retainer" });
+  ok("retainer client month 1 > months 2+", clientTotals(s2, { ...q2, mode: "retainer" }, cRet,
+    clientRows(s2, { ...q2, mode: "retainer" }, cRet)).month1 - cRet.monthly > 0 ? 1 : 0, 1);
+
+  out.push("all good");
+  return out.join("\n");
+}
+
+/* ══════════ boot ══════════ */
+
+renderPresets(); renderSaved(); renderRates(); renderLines(); renderInputs(); render(); renderFooter();
+showView(S().lastSavedAt ? "quote" : "setup");
+if (!S().lastSavedAt) renderStep();
+loadFx();
+if (location.search.includes("test")) {
+  const el = $("testout");
+  el.hidden = false;
+  try { el.textContent = selfCheck(); } catch (e) { el.textContent += "\nthrew: " + e.message; }
+  console.log(el.textContent);
+}
+</script>
