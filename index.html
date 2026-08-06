@@ -54,8 +54,9 @@ header::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;p
 .brand{flex:1;min-width:0}
 h1{margin:0;font-size:19px;font-weight:640;letter-spacing:-.016em;line-height:1.2}
 /* the working document's name — the one thing only the chrome can tell you */
-#quoteLabel{margin:1px 0 0;font-size:12.5px;line-height:1.35;color:var(--dim);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* vibrancy: over glass, small text needs a touch more weight and tracking than it would on paper */
+#quoteLabel{margin:1px 0 0;font-size:12.5px;font-weight:490;letter-spacing:.008em;line-height:1.35;
+  color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #quoteLabel.draft{font-style:italic}
 
 .cols{display:grid;gap:20px;grid-template-columns:1fr}
@@ -66,6 +67,13 @@ h1{margin:0;font-size:19px;font-weight:640;letter-spacing:-.016em;line-height:1.
 section{background:var(--panel);border-radius:var(--r);padding:20px;min-width:0;
   box-shadow:0 0 0 .5px var(--hair),var(--shadow)}
 
+/* a view enters from where it came: Settings from the right, under its button; Quote back leftward.
+   display:none → visible restarts the animation on its own, so the toggle needs no motion code. */
+@keyframes viewin{from{opacity:0;transform:translateX(var(--from,0))}}
+#quoteView,#settingsView,#firstRun{animation:viewin .34s var(--ease)}
+#settingsView{--from:18px}
+#quoteView{--from:-18px}
+
 /* ══════════ type ══════════ */
 h2{margin:0 0 16px;font-size:15px;font-weight:640;letter-spacing:-.012em}
 h3{margin:26px 0 10px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
@@ -73,9 +81,10 @@ h3{margin:26px 0 10px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
 section>h3:first-child{margin-top:0}
 label{display:block;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 a{color:var(--accent-ink);text-decoration:none;font-weight:500}
-a:hover{text-decoration:underline}
 .hint{margin:6px 0 12px;font-size:13px;line-height:1.5;color:var(--dim)}
 .eff{color:var(--dim);font-size:13px;white-space:nowrap}
+/* tracking is size-specific: headings tighten as they grow, the small stuff opens up to stay readable */
+label,legend,.hint,.eff,footer,tr.sub td,tr.muted td,.quotebar button,.quotebar select{letter-spacing:.006em}
 
 /* ══════════ controls ══════════ */
 input,select,button{font:inherit;font-size:15px;color:var(--ink);
@@ -83,20 +92,21 @@ input,select,button{font:inherit;font-size:15px;color:var(--ink);
   transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s ease-out}
 input:not([type=checkbox]):not([type=radio]):not([type=file]),select{
   background:var(--fill);border-color:transparent}
-input:not([type=checkbox]):not([type=radio]):not([type=file]):hover,select:hover{background:var(--fill-hi)}
 input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,select:focus{background:var(--panel);border-color:var(--line)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 input:focus-visible,select:focus-visible{outline-offset:0}
 button{cursor:pointer;background:var(--fill);border-color:transparent;
-  font-size:14px;font-weight:530;padding:7px 13px;
+  font-size:14px;padding:7px 13px;
   display:inline-flex;align-items:center;gap:7px}
 /* one drawn icon family: 24-unit grid, 1.8 stroke, round caps */
 .ic{width:16px;height:16px;flex:0 0 auto;display:block;
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-button:hover{background:var(--fill-hi)}
 button:active{transform:scale(.96)}              /* feedback on press, not on release */
 button.primary{background:var(--accent);color:var(--on-accent)}
-button.primary:hover{background:var(--accent);opacity:.86}
+/* we draw our own press states — iOS's grey tap flash lands on top of them, and control
+   labels aren't prose anyone wants to select by accident */
+button,label{-webkit-tap-highlight-color:transparent}
+button,.seg span{-webkit-user-select:none;user-select:none}
 
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
 .row>div{flex:1 1 90px;min-width:0}
@@ -104,6 +114,10 @@ button.primary:hover{background:var(--accent);opacity:.86}
 .row input,.row select{width:100%}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .bar select{flex:1 1 170px;min-width:0}
+/* saving is occasional — the bar sits under the quote, quiet, not above it */
+.quotebar{margin:22px 0 0;padding-top:14px;border-top:1px solid var(--hair)}
+.quotebar button,.quotebar select{font-size:12.5px;padding:5px 9px}
+.quotebar select{flex:0 1 190px}
 fieldset{border:0;padding:0;margin:0;min-width:0}
 legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 
@@ -115,6 +129,7 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
   box-shadow:var(--thumb);transition:transform .34s var(--ease)}
 .seg:has(label:nth-child(2) input:checked)::before{transform:translateX(100%)}
 .seg:has(label:nth-child(3) input:checked)::before{transform:translateX(200%)}
+.seg:has(label:nth-child(4) input:checked)::before{transform:translateX(300%)}
 .seg label{margin:0;z-index:1;color:var(--ink);font-size:14px}
 .seg span{display:block;padding:5px 13px;text-align:center;white-space:nowrap;cursor:pointer;
   font-weight:500;color:var(--dim);border-radius:9px;transition:color .2s,transform .1s ease-out}
@@ -147,9 +162,21 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 .lines input{flex:0 0 auto;width:84px;text-align:right}
 .lines .lbl{flex:1 1 90px;width:auto;min-width:0;text-align:left}
 .lines .rt{width:96px}
-.lines .del{align-self:center;padding:6px}
-.del{flex:0 0 auto;align-self:flex-end;padding:7px;background:transparent;color:var(--dim)}
-.del:hover{background:var(--fill);color:var(--bad)}
+.lines .del{align-self:center}
+/* squared to the input height: 30px left the glyph sitting low beside the field and gave the
+   one destructive control in the row the smallest target on screen. Round, so an icon-only
+   button never reads as another rectangular field. */
+.del{flex:0 0 auto;align-self:flex-end;width:38px;height:38px;padding:0;justify-content:center;
+  border-radius:50%;background:transparent;color:var(--dim)}
+/* every hover state lives here: on touch, :hover sticks after the tap and the control
+   stays lit up long after the finger is gone */
+@media (hover:hover){
+  a:hover{text-decoration:underline}
+  input:not([type=checkbox]):not([type=radio]):not([type=file]):hover,select:hover{background:var(--fill-hi)}
+  button:hover{background:var(--fill-hi)}
+  button.primary:hover{background:var(--accent);opacity:.86}
+  .del:hover{background:var(--fill);color:var(--bad)}
+}
 /* rate card: column headings once, not on every row (inputs carry their own aria-label) */
 #rates .row:not(:first-child) label,#setupRates .row:not(:first-child) label{display:none}
 #rates .row,#setupRates .row{margin-bottom:8px}
@@ -165,9 +192,12 @@ tr.total td{padding-top:12px;font-size:15px;font-weight:590}
 tr.total td+td{font-size:30px;font-weight:640;letter-spacing:-.026em;line-height:1.05}
 tr.muted td{color:var(--dim);font-size:13.5px}
 .good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-.margin-line{margin:0 0 14px;padding:11px 13px;border-radius:var(--rs);
+.margin-line{display:flex;align-items:center;gap:9px;
+  margin:0 0 14px;padding:11px 13px;border-radius:var(--rs);
   font-size:15px;font-weight:590;letter-spacing:-.01em;
   background:color-mix(in srgb,currentColor var(--tint),transparent)}
+/* the verdict is the reason this tool exists — its mark carries the badge scale, not the UI scale */
+.margin-line .ic{width:19px;height:19px;stroke-width:1.7}
 
 /* ══════════ setup & footer ══════════ */
 .steps{max-width:560px;margin:0 auto}
@@ -183,16 +213,18 @@ pre{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space
 
 [hidden]{display:none!important}
 /* ponytail: display:revert would roll back to the UA value, not to .row{display:flex} — so name the type */
-.only-project,.only-retainer,.only-hourly,.only-budget,.only-usd{display:none}
+.only-project,.only-retainer,.only-hourly,.only-budget,.only-foreign{display:none}
 body.mode-project .row.only-project,body.mode-retainer .row.only-retainer{display:flex}
 body.mode-hourly label.only-hourly{display:flex}
 body.mode-retainer span.only-retainer{display:inline}
 body.dir-budget div.only-budget{display:block}
-body.cur-USD p.only-usd{display:block}
+body:not(.cur-SEK) p.only-foreign{display:block}
 
 /* ══════════ accessibility preferences ══════════ */
+/* gentler, not gone: colour and opacity still respond, nothing travels across the screen */
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  *,*::before,*::after{transition-property:background-color,color,border-color,opacity,box-shadow!important}
+  #quoteView,#settingsView,#firstRun{--from:0px}    /* cross-fade in place, no slide */
 }
 @media (prefers-reduced-transparency:reduce){
   header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
@@ -208,10 +240,23 @@ body.cur-USD p.only-usd{display:block}
 }
 </style>
 
+<!-- One drawn family on a 24-unit grid, ink centred on (12,12).
+     Controls: bare glyphs, 12 units of ink (16 where the glyph is inherently wide).
+     Verdicts: enclosed badges, ~18 units, so the mark stays one size as the state changes
+     and never reads as something you can press.
+     Slider knobs are solid dots, not rings: at 16px a 1.2px track running through an unfilled
+     circle is a smudge, and a perpendicular tick instead of a knob reads as "≠".
+     fill/stroke attributes are the only override that reaches inside a <use>, where a CSS
+     selector cannot follow. -->
 <svg hidden aria-hidden="true">
-  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/><circle cx="15" cy="8" r="2.6"/><circle cx="9" cy="16" r="2.6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16"/><circle cx="15" cy="9" r="2.5" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="2.5" fill="currentColor" stroke="none"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
-  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+  <symbol id="i-v-good" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/></symbol>
+  <!-- 16 wide, same as the circles' diameter: at equal width a triangle reads as the larger shape -->
+  <symbol id="i-v-warn" viewBox="0 0 24 24"><path d="M12 5.5L20 19.5H4zM12 10.6v3.8M12 17h.01"/></symbol>
+  <symbol id="i-v-bad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
 </svg>
 
 <main>
@@ -257,13 +302,6 @@ body.cur-USD p.only-usd{display:block}
 <div id="quoteView" class="cols">
 <section>
   <h2>Quote</h2>
-  <div class="bar">
-    <select id="savedSel" aria-label="Saved quotes"><option value="">— saved quotes —</option></select>
-    <button id="qSave">Save</button>
-    <button id="qDup">Duplicate</button>
-    <button id="qDel">Delete</button>
-  </div>
-
   <div class="row" style="gap:14px">
     <fieldset style="flex:0 0 auto"><legend>Mode</legend>
       <div class="seg" style="--n:3">
@@ -273,9 +311,11 @@ body.cur-USD p.only-usd{display:block}
       </div>
     </fieldset>
     <fieldset style="flex:0 0 auto"><legend>Currency</legend>
-      <div class="seg" style="--n:2">
+      <div class="seg" style="--n:4">
         <label><input type="radio" name="cur" value="SEK" data-k="quote.currency"><span>SEK</span></label>
+        <label><input type="radio" name="cur" value="EUR" data-k="quote.currency"><span>EUR</span></label>
         <label><input type="radio" name="cur" value="USD" data-k="quote.currency"><span>USD</span></label>
+        <label><input type="radio" name="cur" value="GBP" data-k="quote.currency"><span>GBP</span></label>
       </div>
     </fieldset>
     <fieldset style="flex:0 0 auto"><legend>Direction</legend>
@@ -288,9 +328,10 @@ body.cur-USD p.only-usd{display:block}
 
   <h3>Hours <span class="eff only-retainer">per month</span></h3>
   <div class="lines" id="lines"></div>
+  <p class="hint" id="linesNote"></p>
   <div class="bar">
     <select id="addFromCard" aria-label="Add a rate from the rate card"></select>
-    <button id="addCustom">+ one-off line</button>
+    <button id="addCustom"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span>One-off line</span></button>
   </div>
 
   <div class="row only-project">
@@ -317,7 +358,7 @@ body.cur-USD p.only-usd{display:block}
     Moms <span class="eff" id="effVat"></span></label>
   <label class="check only-hourly"><input type="checkbox" id="bakeAdmin" data-k="quote.bakeAdmin">
     Bake admin % into shown hourly rates</label>
-  <p class="hint only-usd">USD quote — Swedish VAT usually doesn't apply; toggle it on if it does.</p>
+  <p class="hint only-foreign">Foreign-currency quote — Swedish moms usually doesn't apply; toggle it on if it does.</p>
 
   <div class="only-budget">
     <h3>From budget</h3>
@@ -329,6 +370,13 @@ body.cur-USD p.only-usd{display:block}
           <option value="ex">ex moms</option><option value="inc">ink moms</option></select></div>
     </div>
     <p class="hint" id="budgetOut"></p>
+  </div>
+
+  <div class="bar quotebar">
+    <button id="qSave">Save quote</button>
+    <select id="savedSel" aria-label="Saved quotes"><option value="">— saved quotes —</option></select>
+    <button id="qDup">Duplicate</button>
+    <button id="qDel">Delete</button>
   </div>
 </section>
 
@@ -349,27 +397,30 @@ body.cur-USD p.only-usd{display:block}
 <section>
   <h3>Rate card</h3>
   <div id="rates"></div>
-  <button id="addRate">+ add rate</button>
+  <button id="addRate"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span>Add rate</span></button>
 
   <h3>Fees &amp; defaults</h3>
   <div class="row">
     <div><label for="startupFee">Startup fee (SEK)</label><input type="number" id="startupFee" data-k="settings.startupFee" step="100"></div>
     <div><label for="adminPercent">Admin %</label><input type="number" id="adminPercent" data-k="settings.adminPercent" step="1"></div>
     <div><label for="defaultRiskBufferPercent">Default risk %</label><input type="number" id="defaultRiskBufferPercent" data-k="settings.defaultRiskBufferPercent" step="1"></div>
+    <div><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1"></div>
   </div>
+  <p class="hint">Moms is the rate used whenever a quote has moms switched on — 25 % standard, 12 or 6 for reduced.</p>
 
   <h3>Margin floor</h3>
   <div class="row">
     <div><label for="internalCostPerHour">Internal cost / h (SEK)</label><input type="number" id="internalCostPerHour" data-k="settings.internalCostPerHour" step="50"></div>
     <div><label for="targetMarginPercent">Target margin %</label><input type="number" id="targetMarginPercent" data-k="settings.targetMarginPercent" step="1"></div>
-    <div><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1"></div>
   </div>
 </section>
 
 <section>
-  <h3>Exchange rate</h3>
+  <h3>Exchange rates</h3>
   <div class="row">
-    <div style="flex:0 0 130px"><label for="fxRate">1 USD = SEK</label><input type="number" id="fxRate" data-k="settings.fxRate" step="0.0001"></div>
+    <div><label for="fxEUR">1 EUR = SEK</label><input type="number" id="fxEUR" data-k="settings.fx.EUR" step="0.0001"></div>
+    <div><label for="fxUSD">1 USD = SEK</label><input type="number" id="fxUSD" data-k="settings.fx.USD" step="0.0001"></div>
+    <div><label for="fxGBP">1 GBP = SEK</label><input type="number" id="fxGBP" data-k="settings.fx.GBP" step="0.0001"></div>
   </div>
   <label class="check"><input type="checkbox" id="fxManualOverride" data-k="settings.fxManualOverride"> Manual override</label>
   <p class="hint" id="fxNote">Fetching rate…</p>
@@ -407,6 +458,8 @@ const LS = "pricing.v2", LSFX = "pricing.fx";
 // ponytail: fees and internal cost are stated in SEK — the v2 model dropped baseCurrency,
 // and a SEK-based consultant has no second base to switch to. Rate lines stay per-currency.
 const BASE = "SEK";
+// display order in the pickers; every non-base one needs a settings.fx entry
+const CURS = ["SEK", "EUR", "USD", "GBP"];
 
 const newQuote = s => ({
   id: null, name: "", createdAt: null, updatedAt: null,
@@ -421,7 +474,7 @@ const newQuote = s => ({
 // and empty settings are exactly what triggers first-run setup.
 const defaults = () => {
   const settings = {
-    fxRate: 9.5, fxRateDate: "", fxManualOverride: false, vatPercent: 25,
+    fx: { EUR: 11, USD: 9.5, GBP: 12.8 }, fxRateDate: "", fxManualOverride: false, vatPercent: 25,
     startupFee: 0, adminPercent: 10, defaultRiskBufferPercent: 15,
     targetMarginPercent: 30, internalCostPerHour: null, lastSavedAt: null,
     rates: [
@@ -435,7 +488,9 @@ const defaults = () => {
 
 /* ══════════ engine (pure) ══════════ */
 
-const conv = (amt, from, to, fx) => from === to ? amt : (from === "USD" ? amt * fx : amt / fx);
+/** fx maps a currency to its value in SEK, so any pair converts through the base. */
+const inSek = (cur, fx) => cur === BASE ? 1 : (fx && fx[cur]) || 1;
+const conv = (amt, from, to, fx) => from === to ? amt : amt * inSek(from, fx) / inSek(to, fx);
 
 /** A quote line either points at the rate card or carries its own rate (rateId null = one-off). */
 const lineRate = (s, l) => l.rateId == null
@@ -444,7 +499,7 @@ const lineRate = (s, l) => l.rateId == null
   || { label: "(rate deleted)", hourly: 0, currency: BASE, orphan: true };
 
 function computeQuote(s, q) {
-  const fx = s.fxRate || 1, D = q.currency;
+  const fx = s.fx, D = q.currency;
   const all = q.lines.map(l => {
     const r = lineRate(s, l);
     const hourly = conv(r.hourly || 0, r.currency, D, fx);
@@ -494,7 +549,7 @@ function computeQuote(s, q) {
 
 /** Reverse: what does `target` buy? Solves the active mode's formula for hours. */
 function solveBudget(s, q, target, incVat) {
-  const c = computeQuote(s, q), fx = s.fxRate || 1;
+  const c = computeQuote(s, q);
   const targetEx = incVat && q.vatEnabled ? target / (1 + s.vatPercent / 100) : target;
   // Blend from the hours already entered; with none entered, average the rate card.
   const rated = c.all.filter(l => l.hourly > 0);
@@ -534,7 +589,7 @@ function breakdownRows(s, q, c) {
  *  Amounts are rounded per line and the totals summed from the rounded lines, so the
  *  document a client adds up by hand is internally consistent. */
 function clientRows(s, q, c) {
-  const round = n => c.currency === "SEK" ? Math.round(n) : Math.round(n * 100) / 100;
+  const k = Math.pow(10, dec(c.currency)), round = n => Math.round(n * k) / k;
   const grossUp = c.laborCost
     ? (c.laborCost + c.adminCost + c.risk * (c.laborCost + c.adminCost) / (c.subtotal || 1)) / c.laborCost
     : 1;
@@ -572,8 +627,11 @@ function clientTotals(s, q, c, cr) {
 
 /* ══════════ formatting ══════════ */
 
-const fmt = (n, cur) => new Intl.NumberFormat(cur === "SEK" ? "sv-SE" : "en-US",
-  { style: "currency", currency: cur, maximumFractionDigits: cur === "SEK" ? 0 : 2 }).format(n || 0);
+// kronor are quoted whole; the decimal currencies keep their cents
+const LOC = { SEK: "sv-SE", EUR: "de-DE", USD: "en-US", GBP: "en-GB" };
+const dec = cur => cur === "SEK" ? 0 : 2;
+const fmt = (n, cur) => new Intl.NumberFormat(LOC[cur] || "en-US",
+  { style: "currency", currency: cur, maximumFractionDigits: dec(cur) }).format(n || 0);
 const signed = (n, cur) => (n > 0 ? "+" : "") + fmt(n, cur);
 const pct = n => (Math.round(n * 10) / 10).toLocaleString("sv-SE") + " %";
 const num = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : 0; };
@@ -583,10 +641,21 @@ const when = iso => iso ? new Intl.DateTimeFormat("sv-SE",
 
 /* ══════════ state ══════════ */
 
+/** Merge a stored or imported file onto today's defaults, so a file written before a field
+ *  existed still gets one. Shared by boot and import — an old backup must not import into
+ *  a half-built settings object. */
+function hydrate(saved) {
+  const d = defaults(), sv = saved.settings || {};
+  const out = { ...d, ...saved, settings: { ...d.settings, ...sv, fx: { ...d.settings.fx, ...sv.fx } } };
+  if (sv.fxRate && !sv.fx) out.settings.fx.USD = sv.fxRate;   // v2 held a single USD rate
+  delete out.settings.fxRate;
+  return out;
+}
+
 let db = defaults();
 try {
   const saved = JSON.parse(localStorage.getItem(LS) || "null");
-  if (saved) db = Object.assign(defaults(), saved);
+  if (saved) db = hydrate(saved);
 } catch {}
 const S = () => db.settings, Q = () => db.quote;
 const $ = id => document.getElementById(id);
@@ -606,9 +675,15 @@ const setPath = (path, v) => {
 
 function renderLines() {
   const s = S(), q = Q();
+  // ponytail: a role with no price and no hours is noise — give it a rate in the rate card
+  // and it reappears here. Hours already entered always stay visible, whatever the rate.
+  const idle = l => !(l.hours > 0) && !(lineRate(s, l).hourly > 0);
+  let hidden = 0;
   // lines are per quote: any of them can be dropped, and one-off lines live on the quote itself
   $("lines").innerHTML = q.lines.map((l, i) => {
     const r = lineRate(s, l);
+    // one-off lines and deleted-rate lines always show: one is being typed, the other needs fixing
+    if (idle(l) && !r.orphan && !r.custom) { hidden++; return ""; }
     const rm = `<button class="del" data-lrm="${i}" aria-label="Remove ${esc(r.label)} from this quote">${ico("close")}</button>`;
     if (r.custom) return `<div>
       <input class="lbl" data-l="${i}" data-lf="label" aria-label="Line label" value="${esc(r.label)}">
@@ -616,14 +691,19 @@ function renderLines() {
         aria-label="Rate per hour" value="${r.hourly}">
       <input type="number" id="hr${i}" data-h="${i}" step="1" min="0" aria-label="Hours" value="${l.hours || 0}">${rm}</div>`;
     return `<div><label for="hr${i}">${esc(r.label)}
-      <span${r.orphan ? ' class="bad"' : ""}>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fxRate || 1), q.currency)}</span></label>
+      <span${r.orphan ? ' class="bad"' : ""}>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fx), q.currency)}</span></label>
       <input type="number" id="hr${i}" data-h="${i}" step="1" min="0" value="${l.hours || 0}">${rm}</div>`;
-  }).join("") || `<p class="hint">No lines in this quote — add one below.</p>`;
+  }).join("") || `<p class="hint">Nothing to price yet — add a line below.</p>`;
+  const one = hidden === 1;
+  $("linesNote").textContent = hidden
+    ? `${hidden} unpriced role${one ? "" : "s"} hidden — give ${one ? "it a rate" : "them rates"} in Settings to quote ${one ? "it" : "them"}.`
+    : "";
+  $("linesNote").hidden = !hidden;                       // an empty hint still costs a line of space
 
   const used = new Set(q.lines.map(l => l.rateId));
-  const spare = s.rates.filter(r => !used.has(r.id));
+  const spare = s.rates.filter(r => !used.has(r.id) && r.hourly > 0);
   $("addFromCard").innerHTML = `<option value="">+ from rate card</option>` +
-    spare.map(r => `<option value="${r.id}">${esc(r.label)} · ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fxRate || 1), q.currency)}</option>`).join("");
+    spare.map(r => `<option value="${r.id}">${esc(r.label)} · ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fx), q.currency)}</option>`).join("");
   $("addFromCard").disabled = !spare.length;
 }
 
@@ -632,9 +712,9 @@ function renderRates() {
     <div class="row" data-r="${i}">
       <div style="flex:2 1 110px"><label>Label</label><input data-f="label" aria-label="Rate label" value="${esc(r.label)}"></div>
       <div style="flex:1 1 80px"><label>Rate/h</label><input type="number" data-f="hourly" aria-label="${esc(r.label)} rate per hour" step="50" value="${r.hourly}"></div>
-      <div style="flex:0 1 78px"><label>Cur</label><select data-f="currency" aria-label="${esc(r.label)} currency">
-        <option${r.currency === "SEK" ? " selected" : ""}>SEK</option><option${r.currency === "USD" ? " selected" : ""}>USD</option></select></div>
-      <button class="del" data-f="del" aria-label="Remove ${esc(r.label)}">${ico("close")}</button>
+      <div style="flex:0 1 84px"><label>Cur</label><select data-f="currency" aria-label="${esc(r.label)} currency">
+        ${CURS.map(c => `<option${r.currency === c ? " selected" : ""}>${c}</option>`).join("")}</select></div>
+      <button class="del" data-f="del" aria-label="Delete ${esc(r.label)} from the rate card">${ico("close")}</button>
     </div>`).join("");
   $("rates").innerHTML = html;
   $("setupRates").innerHTML = html;
@@ -663,6 +743,9 @@ function render() {
   const named = !!q.name;
   $("quoteLabel").textContent = named ? q.name : "Unsaved quote";
   $("quoteLabel").className = named ? "" : "draft";
+  // nothing saved yet, nothing to pick from, and no quote to duplicate or delete
+  $("savedSel").hidden = !db.quotes.length;
+  $("qDup").hidden = $("qDel").hidden = !q.id;
 
   const tr = (label, amt, cls = "") =>
     `<tr class="${cls}"><td>${label}</td><td>${amt === null ? "" : fmt(amt, c.currency)}</td></tr>`;
@@ -694,10 +777,9 @@ function render() {
       <a href="#" id="toSettings">Settings</a> to see margin and break-even.</p>`;
   } else {
     const cls = c.marginPercent >= s.targetMarginPercent ? "good" : c.marginPercent >= 0 ? "warn" : "bad";
-    const mark = cls === "good" ? "✓" : cls === "warn" ? "△" : "✕";
     const verdict = cls === "good" ? `above your ${s.targetMarginPercent} % target`
       : cls === "warn" ? `below your ${s.targetMarginPercent} % target` : "losing money";
-    let m = `<p class="margin-line ${cls}">${mark} ${pct(c.marginPercent)} — ${verdict}</p><table>` +
+    let m = `<p class="margin-line ${cls}">${ico("v-" + cls)}<span>${pct(c.marginPercent)} — ${verdict}</span></p><table>` +
       tr("Revenue ex moms", c.totalExVat) + tr("Internal cost", c.internalCost) + tr("Profit", c.profit, "rule") +
       tr(`Target ${s.targetMarginPercent} % needs ≥`, c.minViableRate, "muted");
     if (q.mode !== "retainer" && c.breakEvenHours !== null)
@@ -772,7 +854,7 @@ function internalText() {
 
 async function copy(btn, text) {
   const label = btn.dataset.label || (btn.dataset.label = btn.textContent);
-  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied ✓"; }
+  try { await navigator.clipboard.writeText(text); btn.innerHTML = ico("check") + "<span>Copied</span>"; }
   catch { btn.textContent = "Copy failed"; }
   setTimeout(() => btn.textContent = label, 1300);
 }
@@ -799,7 +881,7 @@ document.addEventListener("input", e => {
       Q().vatEnabled = Q().currency === "SEK";            // §7: USD quotes default to no Swedish VAT
       renderInputs(); renderLines();
     }
-    if (el.dataset.k === "settings.fxRate" || el.dataset.k === "settings.fxManualOverride") { renderLines(); fxNote(S().fxRateDate, true); }
+    if (el.dataset.k.startsWith("settings.fx")) { renderLines(); fxNote(S().fxRateDate, true); }
   } else return;
   save(); render();
 });
@@ -847,8 +929,10 @@ $("addRate").onclick = () => {
   save(); renderRates(); renderLines(); render();
 };
 
-$("copyClient").onclick = e => copy(e.target, clientText());
-$("copyInternal").onclick = e => copy(e.target, internalText());
+// currentTarget, not target: after the first copy the button holds an icon + span, and a
+// second click inside 1.3 s would otherwise stash "Copied" as the label to restore
+$("copyClient").onclick = e => copy(e.currentTarget, clientText());
+$("copyInternal").onclick = e => copy(e.currentTarget, internalText());
 
 /* views */
 function showView(v) {
@@ -891,7 +975,8 @@ function persistQuote(name) {
   const i = db.quotes.findIndex(x => x.id === q.id);
   const copy = JSON.parse(JSON.stringify(q));
   if (i >= 0) db.quotes[i] = copy; else db.quotes.push(copy);
-  save(); renderSaved();
+  // render too: the name in the header and the picker/Delete buttons all key off this
+  save(); renderSaved(); render();
 }
 $("qSave").onclick = () => {
   const name = prompt("Quote name", Q().name || "");
@@ -962,7 +1047,7 @@ $("impFile").onchange = async e => {
     if (!data.settings || !Array.isArray(data.settings.rates)) throw new Error("not a backup file");
     const n = (data.quotes || []).length;
     if (!confirm(`Replace current settings, presets and quotes with this file (${n} saved quote${n === 1 ? "" : "s"})?`)) return;
-    db = Object.assign(defaults(), data);
+    db = hydrate(data);
     save(); renderPresets(); renderSaved(); renderRates(); renderInputs(); renderLines(); render();
   } catch (err) { alert("Import failed: " + err.message); }
   finally { e.target.value = ""; }
@@ -970,27 +1055,39 @@ $("impFile").onchange = async e => {
 
 /* ══════════ FX ══════════ */
 
+const FX_CURS = CURS.filter(c => c !== BASE);
+
 function fxNote(date, cached) {
-  $("fxNote").textContent = S().fxManualOverride ? "Manual rate — the live rate is ignored."
-    : date ? `1 USD = ${S().fxRate} SEK · ECB ${date}${cached ? " (cached)" : ""}`
-    : "No live rate yet — enter it manually.";
+  // ponytail: a blank rate converts 1:1 rather than throwing — cheap, but wrong money is
+  // worse than no money, so say which one is blank instead of leaving it to be spotted.
+  const blank = FX_CURS.filter(c => !(S().fx[c] > 0));
+  $("fxNote").className = blank.length ? "hint bad" : "hint";
+  $("fxNote").textContent = blank.length
+    ? `No rate for ${blank.join(", ")} — quotes in ${blank.length === 1 ? "it" : "them"} convert 1:1 until you set one.`
+    : S().fxManualOverride ? "Manual rates — the live rates are ignored."
+    : date ? `ECB ${date}${cached ? " (cached)" : ""}`
+    : "No live rates yet — enter them manually.";
+}
+function applyFx(fx, date) {
+  Object.assign(S(), { fx: { ...S().fx, ...fx }, fxRateDate: date });
+  renderInputs(); renderLines(); render();
 }
 async function loadFx() {
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(LSFX) || "null"); } catch {}
-  if (cached && !S().fxManualOverride) {
-    Object.assign(S(), { fxRate: cached.rate, fxRateDate: cached.date });
-    renderInputs(); renderLines(); render(); fxNote(cached.date, true);
+  if (cached && cached.fx && !S().fxManualOverride) {
+    applyFx(cached.fx, cached.date); fxNote(cached.date, true);
   }
   try {
-    const r = await fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=SEK");
+    // base=SEK gives foreign-per-krona; invert so each rate reads "1 X = n SEK"
+    const r = await fetch(`https://api.frankfurter.dev/v1/latest?base=SEK&symbols=${FX_CURS.join(",")}`);
     const j = await r.json();
-    if (!j.rates || !j.rates.SEK) throw new Error("bad payload");
-    localStorage.setItem(LSFX, JSON.stringify({ rate: j.rates.SEK, date: j.date }));
+    if (!j.rates || !FX_CURS.every(c => j.rates[c] > 0)) throw new Error("bad payload");
+    const fx = Object.fromEntries(FX_CURS.map(c => [c, Math.round(1 / j.rates[c] * 1e4) / 1e4]));
+    localStorage.setItem(LSFX, JSON.stringify({ fx, date: j.date }));
     if (!S().fxManualOverride) {
-      Object.assign(S(), { fxRate: j.rates.SEK, fxRateDate: j.date });
+      applyFx(fx, j.date);
       localStorage.setItem(LS, JSON.stringify(db));   // not a user edit — no export nudge
-      renderInputs(); renderLines(); render();
     }
     fxNote(j.date, false);
   } catch { fxNote(cached && cached.date, true); }
@@ -1006,7 +1103,7 @@ function selfCheck() {
     if (!pass) throw new Error(name);
   };
   const s = {
-    fxRate: 10, vatPercent: 25, startupFee: 5000, adminPercent: 10,
+    fx: { EUR: 11, USD: 10, GBP: 12.5 }, vatPercent: 25, startupFee: 5000, adminPercent: 10,
     defaultRiskBufferPercent: 15, targetMarginPercent: 30, internalCostPerHour: 500,
     rates: [{ id: 1, label: "A", hourly: 1000, currency: "SEK" }],
   };
@@ -1042,6 +1139,13 @@ function selfCheck() {
 
   c = computeQuote({ ...s, rates: [{ id: 1, label: "A", hourly: 100, currency: "USD" }] }, q);
   ok("mixed-currency labor", c.laborCost, 10000);
+
+  // cross-rate: an EUR rate priced in a GBP quote goes through SEK, not through 1:1
+  c = computeQuote({ ...s, rates: [{ id: 1, label: "A", hourly: 100, currency: "EUR" }] },
+    { ...q, currency: "GBP", vatEnabled: false });
+  ok("eur rate in gbp quote", c.laborCost, 100 * 10 * 11 / 12.5);
+  ok("gbp startup", c.startup, 5000 / 12.5);
+  ok("round trip", conv(conv(1234, "GBP", "EUR", s.fx), "EUR", "GBP", s.fx), 1234);
 
   // per-quote lines: a one-off line carries its own rate, a line whose rate was deleted is worth nothing
   c = computeQuote(s, { ...q, lines: [{ rateId: 1, hours: 10 }, { rateId: null, label: "Print", hourly: 700, currency: "SEK", hours: 4 }] });
