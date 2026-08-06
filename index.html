@@ -66,7 +66,7 @@ section{background:var(--panel);border-radius:var(--r);padding:20px;min-width:0;
 h2{margin:0 0 16px;font-size:15px;font-weight:640;letter-spacing:-.012em}
 h3{margin:26px 0 10px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
   text-transform:uppercase;color:var(--dim)}
-h3:first-child{margin-top:0}
+section>h3:first-child{margin-top:0}
 label{display:block;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 a{color:var(--accent-ink);text-decoration:none;font-weight:500}
 a:hover{text-decoration:underline}
@@ -135,8 +135,14 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
   flex:1;min-width:0;margin:0;color:var(--ink);font-size:15px}
 .lines label span{color:var(--dim);font-size:13px}
 .lines input{flex:0 0 auto;width:84px;text-align:right}
+.lines .lbl{flex:1 1 90px;width:auto;min-width:0;text-align:left}
+.lines .rt{width:96px}
+.lines .del{align-self:center;padding:6px}
 .del{flex:0 0 auto;align-self:flex-end;padding:7px;background:transparent;color:var(--dim)}
 .del:hover{background:var(--fill);color:var(--bad)}
+/* rate card: column headings once, not on every row (inputs carry their own aria-label) */
+#rates .row:not(:first-child) label,#setupRates .row:not(:first-child) label{display:none}
+#rates .row,#setupRates .row{margin-bottom:8px}
 
 /* ══════════ breakdown ══════════ */
 table{width:100%;border-collapse:collapse}
@@ -155,8 +161,10 @@ tr.muted td{color:var(--dim);font-size:13.5px}
 
 /* ══════════ setup & footer ══════════ */
 .steps{max-width:560px;margin:0 auto}
-.steps legend{margin-bottom:14px;font-size:17px;font-weight:600;line-height:1.3;
-  letter-spacing:-.012em;color:var(--ink)}
+#stepLabel{margin-bottom:6px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--dim)}
+.steps legend{margin-bottom:16px;font-size:19px;font-weight:620;line-height:1.3;
+  letter-spacing:-.016em;color:var(--ink)}
 footer{max-width:1060px;margin:0 auto;padding:4px 20px 56px;font-size:12.5px;color:var(--dim)}
 footer a{text-underline-offset:2px}
 footer a.nudge{color:var(--warn);font-weight:600}
@@ -261,6 +269,10 @@ body.cur-USD p.only-usd{display:block}
 
   <h3>Hours <span class="eff only-retainer">per month</span></h3>
   <div class="lines" id="lines"></div>
+  <div class="bar">
+    <select id="addFromCard" aria-label="Add a rate from the rate card"></select>
+    <button id="addCustom">+ one-off line</button>
+  </div>
 
   <div class="row only-project">
     <div style="flex:0 0 110px"><label for="riskBufferPercent">Risk buffer %</label>
@@ -406,14 +418,19 @@ const defaults = () => {
 
 const conv = (amt, from, to, fx) => from === to ? amt : (from === "USD" ? amt * fx : amt / fx);
 
+/** A quote line either points at the rate card or carries its own rate (rateId null = one-off). */
+const lineRate = (s, l) => l.rateId == null
+  ? { label: l.label || "Custom", hourly: l.hourly || 0, currency: l.currency || BASE, custom: true }
+  : s.rates.find(r => r.id === l.rateId)
+  || { label: "(rate deleted)", hourly: 0, currency: BASE, orphan: true };
+
 function computeQuote(s, q) {
   const fx = s.fxRate || 1, D = q.currency;
   const all = q.lines.map(l => {
-    const r = s.rates.find(r => r.id === l.rateId);
-    if (!r) return null;
+    const r = lineRate(s, l);
     const hourly = conv(r.hourly || 0, r.currency, D, fx);
     return { label: r.label, hours: l.hours || 0, hourly, amount: hourly * (l.hours || 0) };
-  }).filter(Boolean);
+  });
   const lines = all.filter(l => l.hours > 0);
 
   const hours = lines.reduce((a, l) => a + l.hours, 0);
@@ -570,12 +587,25 @@ const setPath = (path, v) => {
 
 function renderLines() {
   const s = S(), q = Q();
-  $("lines").innerHTML = s.rates.map(r => {
-    const h = (q.lines.find(l => l.rateId === r.id) || {}).hours || 0;
-    return `<div><label for="h${r.id}">${esc(r.label)}
-      <span>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fxRate || 1), q.currency)}</span></label>
-      <input type="number" id="h${r.id}" data-h="${r.id}" step="1" min="0" value="${h}"></div>`;
-  }).join("") || `<p class="hint">No rates yet — add them in ⚙ Settings.</p>`;
+  // lines are per quote: any of them can be dropped, and one-off lines live on the quote itself
+  $("lines").innerHTML = q.lines.map((l, i) => {
+    const r = lineRate(s, l);
+    const rm = `<button class="del" data-lrm="${i}" aria-label="Remove ${esc(r.label)} from this quote">✕</button>`;
+    if (r.custom) return `<div>
+      <input class="lbl" data-l="${i}" data-lf="label" aria-label="Line label" value="${esc(r.label)}">
+      <input class="rt" type="number" data-l="${i}" data-lf="hourly" step="50" min="0"
+        aria-label="Rate per hour" value="${r.hourly}">
+      <input type="number" id="hr${i}" data-h="${i}" step="1" min="0" aria-label="Hours" value="${l.hours || 0}">${rm}</div>`;
+    return `<div><label for="hr${i}">${esc(r.label)}
+      <span${r.orphan ? ' class="bad"' : ""}>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fxRate || 1), q.currency)}</span></label>
+      <input type="number" id="hr${i}" data-h="${i}" step="1" min="0" value="${l.hours || 0}">${rm}</div>`;
+  }).join("") || `<p class="hint">No lines in this quote — add one below.</p>`;
+
+  const used = new Set(q.lines.map(l => l.rateId));
+  const spare = s.rates.filter(r => !used.has(r.id));
+  $("addFromCard").innerHTML = `<option value="">+ from rate card</option>` +
+    spare.map(r => `<option value="${r.id}">${esc(r.label)} · ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fxRate || 1), q.currency)}</option>`).join("");
+  $("addFromCard").disabled = !spare.length;
 }
 
 function renderRates() {
@@ -729,8 +759,10 @@ async function copy(btn, text) {
 document.addEventListener("input", e => {
   const el = e.target, row = el.closest("[data-r]");
   if (el.dataset.h) {                                    // hours on the quote view
-    const id = +el.dataset.h, l = Q().lines.find(l => l.rateId === id);
-    if (l) l.hours = num(el.value); else Q().lines.push({ rateId: id, hours: num(el.value) });
+    Q().lines[+el.dataset.h].hours = num(el.value);
+  } else if (el.dataset.l) {                             // label / rate of a one-off line
+    const l = Q().lines[+el.dataset.l];
+    l[el.dataset.lf] = el.type === "number" ? num(el.value) : el.value;
   } else if (row && el.dataset.f) {                      // rate card editor
     const r = S().rates[+row.dataset.r];
     r[el.dataset.f] = el.type === "number" ? num(el.value) : el.value;
@@ -758,12 +790,32 @@ function renderRates0(el, row) {
 
 document.addEventListener("click", e => {
   if (e.target.id === "toSettings") { e.preventDefault(); showView("settings"); return; }
+  if (e.target.dataset.lrm) {                            // drop a line from this quote only
+    Q().lines.splice(+e.target.dataset.lrm, 1);
+    save(); renderLines(); render();
+    return;
+  }
   if (e.target.dataset.f !== "del") return;
   const i = +e.target.closest("[data-r]").dataset.r, id = S().rates[i].id;
   S().rates.splice(i, 1);
   Q().lines = Q().lines.filter(l => l.rateId !== id);
   save(); renderRates(); renderLines(); render();
 });
+
+$("addFromCard").onchange = e => {
+  const id = +e.target.value;
+  if (!id) return;
+  Q().lines.push({ rateId: id, hours: 0 });
+  save(); renderLines(); render();
+};
+// ponytail: a one-off line inherits the quote's currency at creation — no per-line picker,
+// the rate card is where currency lives.
+$("addCustom").onclick = () => {
+  Q().lines.push({ rateId: null, label: "", hourly: 0, currency: Q().currency, hours: 0 });
+  save(); renderLines(); render();
+  const inputs = document.querySelectorAll("#lines .lbl");
+  inputs[inputs.length - 1]?.focus();
+};
 
 $("addRate").onclick = () => {
   const id = Math.max(0, ...S().rates.map(r => r.id)) + 1;
@@ -964,6 +1016,17 @@ function selfCheck() {
 
   c = computeQuote({ ...s, rates: [{ id: 1, label: "A", hourly: 100, currency: "USD" }] }, q);
   ok("mixed-currency labor", c.laborCost, 10000);
+
+  // per-quote lines: a one-off line carries its own rate, a line whose rate was deleted is worth nothing
+  c = computeQuote(s, { ...q, lines: [{ rateId: 1, hours: 10 }, { rateId: null, label: "Print", hourly: 700, currency: "SEK", hours: 4 }] });
+  ok("one-off line labor", c.laborCost, 12800); ok("one-off line hours", c.hours, 14);
+  ok("one-off line label", c.lines[1].label === "Print" ? 1 : 0, 1);
+  c = computeQuote(s, { ...q, currency: "USD", lines: [{ rateId: null, label: "Print", hourly: 700, currency: "SEK", hours: 4 }] });
+  ok("one-off line converts", c.laborCost, 280);
+  c = computeQuote(s, { ...q, lines: [{ rateId: 1, hours: 10 }, { rateId: 99, hours: 5 }] });
+  ok("orphan line adds nothing", c.laborCost, 10000);
+  ok("orphan line still shown, at zero", c.lines.length, 2);   // visible so it gets noticed and fixed
+  ok("orphan line amount", c.lines[1].amount, 0);
 
   // unset internal cost must not fake a 100% margin
   c = computeQuote({ ...s, internalCostPerHour: null }, q);
