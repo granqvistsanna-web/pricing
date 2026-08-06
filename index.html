@@ -154,7 +154,9 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 .check .eff{margin-left:auto}
 
 .lines{display:grid;margin-bottom:18px}
-.lines div{display:flex;gap:12px;align-items:center;padding:5px 0}
+/* min-width:0 — without it the grid track sizes to the row's min-content and the remove
+   button is drawn outside the card at 320px */
+.lines div{display:flex;gap:12px;align-items:center;padding:5px 0;min-width:0}
 .lines div+div{border-top:1px solid var(--hair)}
 .lines label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   flex:1;min-width:0;margin:0;color:var(--ink);font-size:15px}
@@ -253,6 +255,7 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   <symbol id="i-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
   <symbol id="i-v-good" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/></symbol>
   <!-- 16 wide, same as the circles' diameter: at equal width a triangle reads as the larger shape -->
   <symbol id="i-v-warn" viewBox="0 0 24 24"><path d="M12 5.5L20 19.5H4zM12 10.6v3.8M12 17h.01"/></symbol>
