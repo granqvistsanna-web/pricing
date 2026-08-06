@@ -13,9 +13,11 @@
   --fill:rgba(0,0,0,.05); --fill-hi:rgba(0,0,0,.085);
   --line:rgba(0,0,0,.11); --hair:rgba(0,0,0,.065);
   --ink:#1b1a18; --dim:#6f6b64;      /* 4.9:1 on --bg; the old #78746d measured 4.3:1 at 12.5px */
-  --accent:#0071E3; --accent-ink:#0066CC; --on-accent:#fff;
+  --accent:#0071E3; --fill-accent:#006edb; --accent-ink:#0066CC; --on-accent:#fff;
   --good:#12693f; --warn:#8f5600; --bad:#b3261e; --green-fill:#34C759;
-  --tint:7%;
+  /* tint-hi carries the failing verdicts. Not a multiple of --tint: the same emphasis step that
+     darkens a light panel lightens a dark one, so each theme needs its own value to hold AA. */
+  --tint:7%; --tint-hi:14%;
   --glass:rgba(246,245,243,.72);
   --shadow:0 1px 2px rgba(0,0,0,.05),0 14px 30px -18px rgba(0,0,0,.2);
   --thumb:0 0 0 .5px rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.12);
@@ -28,11 +30,11 @@
   --fill:rgba(255,255,255,.07); --fill-hi:rgba(255,255,255,.12);
   --line:rgba(255,255,255,.13); --hair:rgba(255,255,255,.08);
   --ink:#ecebe8; --dim:#97938c;
-  --accent:#0A84FF; --accent-ink:#3B99FF; --on-accent:#fff;
+  --accent:#0A84FF; --fill-accent:#0060DF; --accent-ink:#62adff; --on-accent:#fff;
   --good:#4ec07f; --warn:#e0a33a; --bad:#f2796d; --green-fill:#30D158;
-  --tint:15%;
+  --tint:15%; --tint-hi:18%;
   --glass:rgba(18,18,20,.72);
-  --shadow:0 1px 2px rgba(0,0,0,.5);
+  --shadow:0 0 0 .5px rgba(255,255,255,.03),0 12px 28px -18px rgba(0,0,0,.9),0 2px 8px rgba(0,0,0,.42);
   --thumb:0 0 0 .5px rgba(255,255,255,.07),0 1px 3px rgba(0,0,0,.5);
 }}
 
@@ -88,7 +90,7 @@ label,legend,.hint,.eff,footer,tr.sub td,tr.muted td,.quotebar button,.quotebar 
 
 /* ══════════ controls ══════════ */
 input,select,button{font:inherit;font-size:15px;color:var(--ink);
-  border:1px solid var(--line);border-radius:var(--rs);padding:7px 10px;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--rs);padding:7px 10px;min-height:40px;background:var(--panel);
   transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s ease-out}
 input:not([type=checkbox]):not([type=radio]):not([type=file]),select{
   background:var(--fill);border-color:transparent}
@@ -107,7 +109,8 @@ button{cursor:pointer;background:var(--fill);border-color:transparent;
 .ic{width:16px;height:16px;flex:0 0 auto;display:block;pointer-events:none;
   fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 button:active{transform:scale(.96)}              /* feedback on press, not on release */
-button.primary{background:var(--accent);color:var(--on-accent)}
+button.primary{background:var(--fill-accent);color:var(--on-accent)}
+button:disabled{opacity:.48;cursor:not-allowed;transform:none}
 /* we draw our own press states — iOS's grey tap flash lands on top of them, and control
    labels aren't prose anyone wants to select by accident */
 button,label{-webkit-tap-highlight-color:transparent}
@@ -121,7 +124,7 @@ button{-webkit-user-select:none;user-select:none}
 .bar select{flex:1 1 170px;min-width:0}
 /* saving is occasional — the bar sits under the quote, quiet, not above it */
 .quotebar{margin:22px 0 0;padding-top:14px;border-top:1px solid var(--hair)}
-.quotebar button,.quotebar select{font-size:12.5px;padding:5px 9px}
+.quotebar button,.quotebar select{font-size:14px;padding:7px 11px}
 .quotebar select{flex:0 1 190px}
 fieldset{border:0;padding:0;margin:0;min-width:0}
 legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
@@ -154,7 +157,7 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
 /* squared to the input height: 30px left the glyph sitting low beside the field and gave the
    one destructive control in the row the smallest target on screen. Round, so an icon-only
    button never reads as another rectangular field. */
-.del{flex:0 0 auto;align-self:flex-end;width:38px;height:38px;padding:0;justify-content:center;
+.del{flex:0 0 auto;align-self:flex-end;width:40px;height:40px;padding:0;justify-content:center;
   border-radius:50%;background:transparent;color:var(--dim)}
 /* every hover state lives here: on touch, :hover sticks after the tap and the control
    stays lit up long after the finger is gone */
@@ -162,7 +165,7 @@ legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
   a:hover{text-decoration:underline}
   input:not([type=checkbox]):not([type=radio]):not([type=file]):hover,select:hover{background:var(--fill-hi)}
   button:hover{background:var(--fill-hi)}
-  button.primary:hover{background:var(--accent);opacity:.86}
+  button.primary:hover{background:var(--fill-accent);opacity:.9}
   .del:hover{background:var(--fill);color:var(--bad)}
 }
 /* rate card: column headings once, not on every row (inputs carry their own aria-label) */
@@ -174,21 +177,30 @@ table{width:100%;border-collapse:collapse}
 td{padding:4px 0;vertical-align:baseline}
 td+td{text-align:right;white-space:nowrap;padding-left:14px}
 tr.sub td{padding:1px 0 1px 16px;color:var(--dim);font-size:13.5px}
+tr.sub td:first-child{white-space:nowrap}
 tr.sub td+td{padding-left:14px}
 tr.rule td{border-top:1px solid var(--line);padding-top:12px}
 tr.total td{padding-top:12px;font-size:15px;font-weight:590}
 tr.total td+td{font-size:30px;font-weight:640;letter-spacing:-.026em;line-height:1.05}
 tr.muted td{color:var(--dim);font-size:13.5px}
+tr.retainer-key td{font-size:15px;font-weight:590}
+tr.retainer-key td+td{font-size:23px;font-weight:640;letter-spacing:-.018em;line-height:1.1}
 .good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-.margin-line{display:flex;align-items:center;gap:9px;
+.margin-line{--t:var(--tint);display:flex;align-items:center;gap:9px;
   margin:0 0 14px;padding:11px 13px;border-radius:var(--rs);
   font-size:15px;font-weight:590;letter-spacing:-.01em;
-  background:color-mix(in srgb,currentColor var(--tint),transparent)}
+  background:color-mix(in srgb,currentColor var(--t),transparent)}
+/* a bad verdict must not read at the same volume as an all-clear: double tint and a rule down
+   the edge, so "below target" is visibly a different kind of statement from "above" */
+.margin-line.warn,.margin-line.bad{--t:var(--tint-hi);padding-left:16px;
+  box-shadow:inset 3px 0 0 currentColor}
+/* weight, not opacity, sets this apart — dimming it drops the amber under 4.5:1 */
+.margin-line small{font-size:inherit;font-weight:460}
 /* the verdict is the reason this tool exists — its mark carries the badge scale, not the UI scale */
 .margin-line .ic{width:19px;height:19px;stroke-width:1.7}
 
 /* ══════════ setup & footer ══════════ */
-.steps{max-width:560px;margin:0 auto}
+.steps{max-width:560px;margin:clamp(48px,16vh,140px) auto}
 #stepLabel{margin-bottom:6px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
   text-transform:uppercase;color:var(--dim)}
 .steps legend{margin-bottom:16px;font-size:19px;font-weight:620;line-height:1.3;
@@ -197,7 +209,25 @@ footer{max-width:1060px;margin:0 auto;padding:4px 20px 56px;font-size:12.5px;col
 footer a{text-underline-offset:2px}
 footer a.nudge{color:var(--warn);font-weight:600}
 footer button,.hint button{font-size:12.5px;padding:5px 10px}
+footer a{display:inline-flex;align-items:center;min-height:24px}
 pre{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;color:var(--dim)}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#saveStatus{min-height:20px;margin:10px 0 0;font-size:13px;color:var(--dim)}
+#toast{position:fixed;left:50%;bottom:22px;z-index:50;max-width:min(420px,calc(100vw - 32px));
+  transform:translate(-50%,10px);opacity:0;pointer-events:none;padding:10px 14px;border-radius:999px;
+  background:var(--ink);color:var(--bg);box-shadow:var(--shadow);font-size:14px;font-weight:520;
+  transition:opacity .18s var(--ease),transform .18s var(--ease)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+dialog{width:min(420px,calc(100vw - 32px));border:0;border-radius:18px;padding:0;
+  color:var(--ink);background:var(--panel);box-shadow:0 0 0 .5px var(--hair),0 24px 80px rgba(0,0,0,.32)}
+dialog::backdrop{background:rgba(0,0,0,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.dialog-body{padding:20px}
+.dialog-body h2{margin-bottom:8px;font-size:17px}
+.dialog-body p{margin:0 0 16px;color:var(--dim);font-size:14px}
+.dialog-body input{width:100%;margin-bottom:16px}
+.dialog-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 
 [hidden]{display:none!important}
 /* ponytail: display:revert would roll back to the UA value, not to .row{display:flex} — so name the type */
@@ -225,6 +255,22 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   }
   section{box-shadow:0 0 0 1px var(--line)}
   input:not([type=checkbox]):not([type=radio]):not([type=file]),select,button{border-color:var(--line)}
+}
+@media (max-width:600px){
+  main{padding-inline:14px}
+  header{margin-inline:-14px;padding-inline:14px}
+  button,.quotebar button,.hint button,select,input:not([type=checkbox]):not([type=radio]):not([type=file]){min-height:44px}
+  .del{width:44px;height:44px}
+  footer a{min-height:44px}
+  #quote tbody{display:block}
+  #quote tr{display:grid;grid-template-columns:minmax(0,1fr) max-content;column-gap:10px}
+  #quote td{display:block;min-width:0}
+  #quote td+td{padding-left:0}
+  #quote tr.sub{grid-template-columns:1fr}
+  #quote tr.sub td{padding-left:0}
+  #quote tr.sub td:first-child{white-space:normal}
+  #quote tr.total td+td{font-size:24px}
+  #quote tr.retainer-key td+td{font-size:21px}
 }
 </style>
 
@@ -267,18 +313,18 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   <fieldset class="step" data-step="2" hidden>
     <legend>2. Fixed costs on top of hours.</legend>
     <div class="row">
-      <div><label for="s_startupFee">Startup fee</label><input type="number" id="s_startupFee" data-k="settings.startupFee" step="100"></div>
-      <div><label for="s_adminPercent">Admin %</label><input type="number" id="s_adminPercent" data-k="settings.adminPercent" step="1"></div>
+      <div><label for="s_startupFee">Startup fee</label><input type="number" id="s_startupFee" data-k="settings.startupFee" step="100" min="0"></div>
+      <div><label for="s_adminPercent">Admin %</label><input type="number" id="s_adminPercent" data-k="settings.adminPercent" step="1" min="0" max="100"></div>
     </div>
     <p class="hint">Admin covers the unbilled hours around the billed ones. Startup fee is the one-time cost of getting an engagement running.</p>
   </fieldset>
   <fieldset class="step" data-step="3" hidden>
     <legend>3. What does an hour cost you?</legend>
     <div class="row">
-      <div><label for="s_internalCostPerHour">Internal cost / h</label><input type="number" id="s_internalCostPerHour" data-k="settings.internalCostPerHour" step="50"></div>
-      <div><label for="s_targetMarginPercent">Target margin %</label><input type="number" id="s_targetMarginPercent" data-k="settings.targetMarginPercent" step="1"></div>
+      <div><label for="s_internalCostPerHour">Internal cost / h</label><input type="number" id="s_internalCostPerHour" data-k="settings.internalCostPerHour" step="50" min="0"></div>
+      <div><label for="s_targetMarginPercent">Target margin %</label><input type="number" id="s_targetMarginPercent" data-k="settings.targetMarginPercent" step="1" min="0" max="99"></div>
     </div>
-    <p class="hint">This powers the margin check — the number that tells you whether a quote is actually worth taking. Without it there is no floor.</p>
+    <p class="hint">This powers the margin check: the number that tells you whether a quote is actually worth taking. Without it there is no floor.</p>
   </fieldset>
   <div class="bar" style="margin:16px 0 0">
     <button class="primary" id="stepNext">Next</button>
@@ -322,19 +368,19 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 
   <div class="row only-project">
     <div style="flex:0 0 110px"><label for="riskBufferPercent">Risk buffer %</label>
-      <input type="number" id="riskBufferPercent" data-k="quote.riskBufferPercent" step="1"></div>
+      <input type="number" id="riskBufferPercent" data-k="quote.riskBufferPercent" step="1" min="0" max="200"></div>
     <div class="eff" id="effRisk"></div>
   </div>
   <div class="row only-retainer">
     <div style="flex:0 0 90px"><label for="retainerMonths">Months</label>
       <input type="number" id="retainerMonths" data-k="quote.retainerMonths" step="1" min="1"></div>
     <div style="flex:0 0 130px"><label for="retainerDiscountPercent">Retainer discount %</label>
-      <input type="number" id="retainerDiscountPercent" data-k="quote.retainerDiscountPercent" step="1"></div>
+      <input type="number" id="retainerDiscountPercent" data-k="quote.retainerDiscountPercent" step="1" min="0" max="100"></div>
     <div class="eff" id="effRetainer"></div>
   </div>
   <div class="row">
     <div style="flex:0 0 110px"><label for="discountPercent">Discount %</label>
-      <input type="number" id="discountPercent" data-k="quote.discountPercent" step="1"></div>
+      <input type="number" id="discountPercent" data-k="quote.discountPercent" step="1" min="0" max="100"></div>
     <div class="eff" id="effDiscount"></div>
   </div>
 
@@ -344,13 +390,13 @@ body:not(.cur-SEK) p.only-foreign{display:block}
     Moms <span class="eff" id="effVat"></span></label>
   <label class="check only-hourly"><input type="checkbox" id="bakeAdmin" data-k="quote.bakeAdmin">
     Bake admin % into shown hourly rates</label>
-  <p class="hint only-foreign">Foreign-currency quote — Swedish moms usually doesn't apply; toggle it on if it does.</p>
+  <p class="hint only-foreign">Foreign-currency quote. Swedish moms usually doesn't apply; toggle it on if it does.</p>
 
   <div class="only-budget">
     <h3>From budget</h3>
     <div class="row">
       <div style="flex:0 0 130px"><label for="budgetTarget">Client budget</label>
-        <input type="number" id="budgetTarget" data-k="quote.budgetTarget" step="1000"></div>
+        <input type="number" id="budgetTarget" data-k="quote.budgetTarget" step="1000" min="0"></div>
       <div style="flex:0 0 110px"><label for="budgetIncVat">Stated</label>
         <select id="budgetIncVat" data-k="quote.budgetIncVat">
           <option value="ex">ex moms</option><option value="inc">ink moms</option></select></div>
@@ -364,17 +410,21 @@ body:not(.cur-SEK) p.only-foreign{display:block}
     <button id="qDup">Duplicate</button>
     <button id="qDel">Delete</button>
   </div>
+  <p id="saveStatus" role="status" aria-live="polite"></p>
 </section>
 
 <section>
   <h2>Breakdown</h2>
+  <!-- the verdict leads the panel: it is the judgement the arithmetic below exists to support -->
+  <div id="verdict"></div>
   <table id="quote"></table>
+  <div id="announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <div class="bar" style="margin:16px 0 0">
     <button class="primary" id="copyClient">Copy for client</button>
     <button id="copyInternal">Copy internal</button>
   </div>
   <h2 style="margin:26px 0 12px">Margin</h2>
-  <div id="margin"></div>
+  <div id="margin" role="status"></div>
 </section>
 </div>
 
@@ -387,29 +437,12 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 
   <h3>Fees &amp; defaults</h3>
   <div class="row">
-    <div><label for="startupFee">Startup fee (SEK)</label><input type="number" id="startupFee" data-k="settings.startupFee" step="100"></div>
-    <div><label for="adminPercent">Admin %</label><input type="number" id="adminPercent" data-k="settings.adminPercent" step="1"></div>
-    <div><label for="defaultRiskBufferPercent">Default risk %</label><input type="number" id="defaultRiskBufferPercent" data-k="settings.defaultRiskBufferPercent" step="1"></div>
-    <div><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1"></div>
+    <div><label for="startupFee">Startup fee (SEK)</label><input type="number" id="startupFee" data-k="settings.startupFee" step="100" min="0"></div>
+    <div><label for="adminPercent">Admin %</label><input type="number" id="adminPercent" data-k="settings.adminPercent" step="1" min="0" max="100"></div>
+    <div><label for="defaultRiskBufferPercent">Default risk %</label><input type="number" id="defaultRiskBufferPercent" data-k="settings.defaultRiskBufferPercent" step="1" min="0" max="200"></div>
+    <div><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1" min="0" max="100"></div>
   </div>
-  <p class="hint">Moms is the rate used whenever a quote has moms switched on — 25 % standard, 12 or 6 for reduced.</p>
-
-  <h3>Margin floor</h3>
-  <div class="row">
-    <div><label for="internalCostPerHour">Internal cost / h (SEK)</label><input type="number" id="internalCostPerHour" data-k="settings.internalCostPerHour" step="50"></div>
-    <div><label for="targetMarginPercent">Target margin %</label><input type="number" id="targetMarginPercent" data-k="settings.targetMarginPercent" step="1"></div>
-  </div>
-</section>
-
-<section>
-  <h3>Exchange rates</h3>
-  <div class="row">
-    <div><label for="fxEUR">1 EUR = SEK</label><input type="number" id="fxEUR" data-k="settings.fx.EUR" step="0.0001"></div>
-    <div><label for="fxUSD">1 USD = SEK</label><input type="number" id="fxUSD" data-k="settings.fx.USD" step="0.0001"></div>
-    <div><label for="fxGBP">1 GBP = SEK</label><input type="number" id="fxGBP" data-k="settings.fx.GBP" step="0.0001"></div>
-  </div>
-  <label class="check"><input type="checkbox" id="fxManualOverride" data-k="settings.fxManualOverride"> Manual override</label>
-  <p class="hint" id="fxNote">Fetching rates…</p>
+  <p class="hint">Moms is the rate used whenever a quote has moms switched on: 25 % standard, 12 or 6 for reduced.</p>
 
   <h3>Presets</h3>
   <div class="bar">
@@ -417,7 +450,24 @@ body:not(.cur-SEK) p.only-foreign{display:block}
     <button id="presetSave">Save as…</button>
     <button id="presetDel">Delete</button>
   </div>
-  <p class="hint">A preset is a copy of the rate card, fees and margin floor — e.g. “standard” and “friends &amp; family”.</p>
+  <p class="hint">A preset is a copy of the rate card, fees and margin floor, e.g. “standard” and “friends &amp; family”.</p>
+</section>
+
+<section>
+  <h3>Exchange rates</h3>
+  <div class="row">
+    <div><label for="fxEUR">1 EUR = SEK</label><input type="number" id="fxEUR" data-k="settings.fx.EUR" step="0.0001" min="0.0001"></div>
+    <div><label for="fxUSD">1 USD = SEK</label><input type="number" id="fxUSD" data-k="settings.fx.USD" step="0.0001" min="0.0001"></div>
+    <div><label for="fxGBP">1 GBP = SEK</label><input type="number" id="fxGBP" data-k="settings.fx.GBP" step="0.0001" min="0.0001"></div>
+  </div>
+  <label class="check"><input type="checkbox" id="fxManualOverride" data-k="settings.fxManualOverride"> Manual override</label>
+  <p class="hint" id="fxNote">Fetching rates…</p>
+
+  <h3>Margin floor</h3>
+  <div class="row">
+    <div><label for="internalCostPerHour">Internal cost / h (SEK)</label><input type="number" id="internalCostPerHour" data-k="settings.internalCostPerHour" step="50" min="0"></div>
+    <div><label for="targetMarginPercent">Target margin %</label><input type="number" id="targetMarginPercent" data-k="settings.targetMarginPercent" step="1" min="0" max="99"></div>
+  </div>
 
   <h3>Backup</h3>
   <div class="bar">
@@ -431,6 +481,19 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 </div>
 
 <pre id="testout" hidden></pre>
+<dialog id="sysDialog">
+  <form method="dialog" class="dialog-body">
+    <h2 id="dlgTitle"></h2>
+    <p id="dlgMsg"></p>
+    <label id="dlgLabel" for="dlgInput" hidden>Name</label>
+    <input id="dlgInput" hidden>
+    <div class="dialog-actions">
+      <button type="button" value="cancel" id="dlgCancel">Cancel</button>
+      <button value="ok" class="primary" id="dlgOk">Save</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
 </main>
 
 <footer>
@@ -533,6 +596,28 @@ function computeQuote(s, q) {
   };
 }
 
+/** The verdict a computed quote earns. Revenue is judged before the ratio: at or below zero,
+ *  profit/revenue flips sign and a wipeout would otherwise score above target. Extracted from
+ *  render so the self-check can assert on it. */
+const verdictClass = (s, c) => c.totalExVat <= 0 ? "bad"
+  : c.marginPercent >= s.targetMarginPercent ? "good" : c.marginPercent >= 0 ? "warn" : "bad";
+const canCopyQuote = c => c.hours > 0;
+
+/** The quote actually under judgement. In budget mode that is not the quote as typed: it is the
+ *  same mix of roles scaled to fit the client's number, so the breakdown, the verdict and both
+ *  clipboard outputs all describe the one thing the user asked about. */
+function active() {
+  const s = S(), q = Q();
+  if (q.direction !== "budget") return { s, q, c: computeQuote(s, q), fit: null };
+  const fit = solveBudget(s, q, q.budgetTarget || 0, q.budgetIncVat === "inc");
+  const c0 = computeQuote(s, q);
+  // nothing to scale: no budget, no hours to keep the mix from, or the budget can't cover fixed costs
+  if (!q.budgetTarget || fit.impossible || !c0.hours) return { s, q, c: c0, fit };
+  const k = fit.hours / c0.hours;
+  const q2 = { ...q, lines: q.lines.map(l => ({ ...l, hours: (l.hours || 0) * k })) };
+  return { s, q: q2, c: computeQuote(s, q2), fit };
+}
+
 /** Reverse: what does `target` buy? Solves the active mode's formula for hours. */
 function solveBudget(s, q, target, incVat) {
   const c = computeQuote(s, q);
@@ -560,8 +645,9 @@ function solveBudget(s, q, target, incVat) {
 function breakdownRows(s, q, c) {
   const bake = q.mode === "hourly" && q.bakeAdmin, k = 1 + s.adminPercent / 100;
   const rows = [["Labor", bake ? c.laborCost * k : c.laborCost, false]];
+  // hrs(), not raw hours: budget mode solves to fractions and "21.059999999 h" is not a line item
   for (const l of c.lines)
-    rows.push([`${l.label} ${l.hours} h × ${fmt(bake ? l.hourly * k : l.hourly, c.currency)}`,
+    rows.push([`${l.label} ${hrs(l.hours)} × ${fmt(bake ? l.hourly * k : l.hourly, c.currency)}`,
       bake ? l.amount * k : l.amount, true]);
   if (!bake) rows.push([`Admin ${s.adminPercent}%`, c.adminCost, false]);
   if (c.startup) rows.push([q.mode === "retainer" ? "Startup fee (month 1)" : "Startup fee", c.startup, false]);
@@ -645,6 +731,42 @@ try {
 } catch {}
 const S = () => db.settings, Q = () => db.quote;
 const $ = id => document.getElementById(id);
+let toastTimer = 0, announceTimer = 0, dialogResolve = null;
+
+function toast(msg) {
+  clearTimeout(toastTimer);
+  $("toast").textContent = msg;
+  $("toast").classList.add("show");
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), 2200);
+}
+
+function askDialog({ title, message = "", label = "", value = "", ok = "OK", input = false, danger = false }) {
+  const d = $("sysDialog"), inp = $("dlgInput");
+  $("dlgTitle").textContent = title;
+  $("dlgMsg").textContent = message;
+  $("dlgMsg").hidden = !message;
+  $("dlgLabel").textContent = label;
+  $("dlgLabel").hidden = !input;
+  inp.hidden = !input;
+  inp.value = value;
+  $("dlgOk").textContent = ok;
+  $("dlgOk").className = danger ? "bad" : "primary";
+  $("dlgCancel").onclick = () => d.close("cancel");
+  inp.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); d.close("ok"); } };
+  d.onclose = () => {
+    if (!dialogResolve) return;
+    const res = d.returnValue === "ok" ? (input ? inp.value.trim() : true) : null;
+    const done = dialogResolve;
+    dialogResolve = null;
+    done(res);
+  };
+  d.showModal();
+  if (input) requestAnimationFrame(() => { inp.focus(); inp.select(); });
+  return new Promise(resolve => { dialogResolve = resolve; });
+}
+
+const askName = (title, label, value, ok = "Save") => askDialog({ title, label, value, ok, input: true });
+const askConfirm = (title, message, ok, danger = false) => askDialog({ title, message, ok, danger });
 
 function save() {
   db.settings.lastSavedAt = new Date().toISOString();
@@ -679,10 +801,10 @@ function renderLines() {
     return `<div><label for="hr${i}">${esc(r.label)}
       <span${r.orphan ? ' class="bad"' : ""}>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fx), q.currency)}</span></label>
       <input type="number" id="hr${i}" data-h="${i}" step="1" min="0" value="${l.hours || 0}">${rm}</div>`;
-  }).join("") || `<p class="hint">Nothing to price yet — add a line below.</p>`;
+  }).join("") || `<p class="hint">Nothing to price yet: add a line below.</p>`;
   const one = hidden === 1;
-  $("linesNote").textContent = hidden
-    ? `${hidden} unpriced role${one ? "" : "s"} hidden — give ${one ? "it a rate" : "them rates"} in Settings to quote ${one ? "it" : "them"}.`
+  $("linesNote").innerHTML = hidden
+    ? `${hidden} unpriced role${one ? "" : "s"} hidden. Give ${one ? "it a rate" : "them rates"} in <a href="#" data-view="settings">Settings</a> to quote ${one ? "it" : "them"}.`
     : "";
   $("linesNote").hidden = !hidden;                       // an empty hint still costs a line of space
 
@@ -723,7 +845,7 @@ function renderFooter() {
 }
 
 function render() {
-  const s = S(), q = Q(), c = computeQuote(s, q);
+  const { s, q, c, fit } = active();
   document.body.className = `mode-${q.mode} dir-${q.direction} cur-${q.currency}`;
   const named = !!q.name;
   $("quoteLabel").textContent = named ? q.name : "Unsaved quote";
@@ -731,22 +853,39 @@ function render() {
   // nothing saved yet, nothing to pick from, and no quote to duplicate or delete
   $("savedSel").hidden = !db.quotes.length;
   $("qDup").hidden = $("qDel").hidden = !q.id;
+  $("qDel").disabled = !q.id;
 
   const tr = (label, amt, cls = "") =>
-    `<tr class="${cls}"><td>${label}</td><td>${amt === null ? "" : fmt(amt, c.currency)}</td></tr>`;
+    // a string amount prints as-is — budget mode's headline is hours, not money
+    `<tr class="${cls}"><td>${label}</td><td>${amt === null ? "" : typeof amt === "string" ? amt : fmt(amt, c.currency)}</td></tr>`;
+  // needs c.hours too: with no hours entered there is no mix to scale, so the panel has nothing
+  // honest to break down and the blended estimate stays in the hint instead
+  const solved = fit && !fit.impossible && fit.hours && c.hours;
   let html = breakdownRows(s, q, c).map(([l, a, sub]) => tr(l, a, sub ? "sub" : "")).join("");
-  if (q.mode === "retainer") {
-    html += tr("Month 1 (incl. startup)", c.month1, "rule total");
-    html += tr("Months 2+", c.monthly, "");
-    html += tr(`Contract value · ${c.months} mo ex moms`, c.totalExVat, "");
+  // in budget mode the money is settled by the client's number — the answer is how many hours it buys
+  if (solved) {
+    html += tr("Total ex moms", c.totalExVat, "rule");
+    if (q.vatEnabled) {
+      html += tr(`Moms ${s.vatPercent}%`, c.vat, "muted");
+      html += tr("Total ink moms", c.totalIncVat, "muted");
+    }
+    html += tr(`Budget buys${q.mode === "retainer" ? " per month" : ""}`, hrs(fit.hours), "rule total");
+    html += tr("Blended rate", `${fmt(fit.perHour, c.currency)}/h`, "muted");
+    if (q.mode === "retainer") html += tr(`Over ${c.months} months`, hrs(fit.hours * c.months), "muted");
   } else {
-    html += tr("Total ex moms", c.totalExVat, "rule total");
+    if (q.mode === "retainer") {
+      html += tr("Months 2+", c.monthly, "rule retainer-key");
+      html += tr(`Contract value · ${c.months} mo ex moms`, c.totalExVat, "retainer-key");
+      html += tr("Month 1 (incl. startup)", c.month1, "muted");
+    } else {
+      html += tr("Total ex moms", c.totalExVat, "rule total");
+    }
+    if (q.vatEnabled) {
+      html += tr(`Moms ${s.vatPercent}%`, c.vat, "muted");
+      html += tr("Total ink moms", c.totalIncVat, "muted");
+    }
+    if (c.hours) html += tr(`Effective rate · ${hrs(c.hours)}${q.mode === "retainer" ? "/mo" : ""}`, c.effectiveHourly, "muted");
   }
-  if (q.vatEnabled) {
-    html += tr(`Moms ${s.vatPercent}%`, c.vat, "muted");
-    html += tr("Total ink moms", c.totalIncVat, "muted");
-  }
-  if (c.hours) html += tr(`Effective rate · ${c.hours} h${q.mode === "retainer" ? "/mo" : ""}`, c.effectiveHourly, "muted");
   $("quote").innerHTML = html;
 
   // percentage inputs show their money effect
@@ -754,31 +893,72 @@ function render() {
   $("effRetainer").textContent = c.retainerDiscount ? `→ ${signed(-c.retainerDiscount, c.currency)}/mo` : "";
   $("effDiscount").textContent = c.discount ? `→ ${signed(-c.discount, c.currency)}` : "";
   $("effStartup").textContent = q.includeStartupFee ? `→ ${signed(c.startup, c.currency)}` : "";
-  $("effVat").textContent = q.vatEnabled ? `${s.vatPercent}% → ${signed(c.vat, c.currency)}` : `${s.vatPercent}% — off`;
+  $("effVat").textContent = q.vatEnabled ? `${s.vatPercent}% → ${signed(c.vat, c.currency)}` : `${s.vatPercent}% off`;
 
-  // margin: colour AND text, plus an explicit unset state
+  // margin: colour AND text, plus an explicit unset state. The badge leads the panel; the
+  // supporting numbers stay at the bottom under their own heading.
   if (!c.costSet) {
+    $("verdict").innerHTML = "";
     $("margin").innerHTML = `<p class="hint">Set your internal cost per hour in
       <a href="#" id="toSettings">Settings</a> to see margin and break-even.</p>`;
   } else {
-    const cls = c.marginPercent >= s.targetMarginPercent ? "good" : c.marginPercent >= 0 ? "warn" : "bad";
-    const verdict = cls === "good" ? `above your ${s.targetMarginPercent} % target`
-      : cls === "warn" ? `below your ${s.targetMarginPercent} % target` : "losing money";
-    let m = `<p class="margin-line ${cls}">${ico("v-" + cls)}<span>${pct(c.marginPercent)} — ${verdict}</span></p><table>` +
+    const dead = c.totalExVat <= 0, cls = verdictClass(s, c);
+    const verdict = dead ? "No revenue: this quote costs you money"
+      : `${pct(c.marginPercent)}: ${cls === "good" ? `above your ${s.targetMarginPercent} % target`
+        : cls === "warn" ? `below your ${s.targetMarginPercent} % target` : "losing money"}`;
+    $("verdict").innerHTML = `<p class="margin-line ${cls}">${ico("v-" + cls)}<span>${verdict}${
+      cls === "good" ? "" : culprit(s, q, c)}</span></p>`;
+    let m = `<table>` +
       tr("Revenue ex moms", c.totalExVat) + tr("Internal cost", c.internalCost) + tr("Profit", c.profit, "rule") +
-      tr(`Target ${s.targetMarginPercent} % needs ≥`, c.minViableRate, "muted");
+      tr(`Target ${s.targetMarginPercent} % needs ≥ per hour`, c.minViableRate, "muted");
     if (q.mode !== "retainer" && c.breakEvenHours !== null)
-      m += `<tr class="muted"><td>Break-even</td><td>${hrs(c.breakEvenHours)}${c.hours ? ` (you estimated ${hrs(c.hours)})` : ""}</td></tr>`;
+      m += `<tr class="muted"><td>Break-even headroom</td><td>${c.hours ? hrs(Math.max(0, c.breakEvenHours - c.hours)) + ` beyond ${hrs(c.hours)}` : hrs(c.breakEvenHours)}</td></tr>`;
     $("margin").innerHTML = m + "</table>";
   }
-
-  if (q.direction === "budget") {
-    const b = solveBudget(s, q, q.budgetTarget || 0, q.budgetIncVat === "inc");
-    const per = b.perLine.length ? " · " + b.perLine.map(l => `${l.label} ${hrs(l.hours)}`).join(", ") : "";
-    $("budgetOut").textContent = !q.budgetTarget ? "Enter a budget to see what it buys."
-      : b.impossible ? `${fmt(q.budgetTarget, c.currency)} doesn't cover the fixed costs — nothing left for hours.`
-      : `${fmt(b.targetEx, c.currency)} ex moms ≈ ${hrs(b.hours)}${q.mode === "retainer" ? "/month" : ""} at ${fmt(b.perHour, c.currency)}/h blended${per}`;
+  const canCopy = canCopyQuote(c);
+  for (const id of ["copyClient", "copyInternal"]) {
+    $(id).disabled = !canCopy;
+    $(id).title = canCopy ? "" : "Add hours before copying a quote.";
   }
+  queueAnnouncement(s, c);
+
+  // the answer itself now lives in the Breakdown panel — this line only covers the two states
+  // that have no answer to show
+  if (fit) {
+    $("budgetOut").textContent = !q.budgetTarget ? "Enter a budget to see what it buys."
+      : fit.impossible ? `${fmt(q.budgetTarget, c.currency)} doesn't cover the fixed costs. Nothing left for hours.`
+      : !c.hours ? `${fmt(fit.targetEx, c.currency)} ex moms ≈ ${hrs(fit.hours)}${q.mode === "retainer" ? "/month" : ""} at ${fmt(fit.perHour, c.currency)}/h blended. Add hours to a role to see the split.`
+      : "";
+    $("budgetOut").hidden = !$("budgetOut").textContent;
+  }
+}
+
+function queueAnnouncement(s, c) {
+  clearTimeout(announceTimer);
+  announceTimer = setTimeout(() => {
+    if (!c.costSet) $("announce").textContent = `${fmt(c.totalExVat, c.currency)} ex moms. Set internal cost per hour to see the verdict.`;
+    else {
+      const cls = verdictClass(s, c);
+      const verdict = c.totalExVat <= 0 ? "bad: no revenue"
+        : cls === "good" ? `good: above ${s.targetMarginPercent} percent target`
+        : cls === "warn" ? `warning: below ${s.targetMarginPercent} percent target`
+        : "bad: losing money";
+      $("announce").textContent = `${fmt(c.totalExVat, c.currency)} ex moms. Margin verdict ${verdict}.`;
+    }
+  }, 450);
+}
+
+/** A failing verdict should name the one lever that would clear the target on its own —
+ *  "below target" is a fact, "the 55 % discount is what did it" is something you can act on. */
+function culprit(s, q, c) {
+  if (c.totalExVat <= 0) return "";
+  for (const [k, label] of [["discountPercent", "Discount"], ["retainerDiscountPercent", "Retainer discount"]]) {
+    if (!q[k]) continue;
+    const t = computeQuote(s, { ...q, [k]: 0 });
+    if (t.totalExVat > 0 && t.marginPercent >= s.targetMarginPercent)
+      return ` <small>· ${label} ${q[k]} % is what pushed you under</small>`;
+  }
+  return "";
 }
 
 const esc = t => String(t).replace(/[<>&"]/g, ch => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" })[ch]);
@@ -789,14 +969,14 @@ const ico = n => `<svg class="ic" aria-hidden="true"><use href="#i-${n}"></use><
 const W = 22, W2 = 20, pad = (l, q, a) => l.padEnd(W) + String(q).padEnd(W2) + a.padStart(13);
 
 function clientText() {
-  const s = S(), q = Q(), c = computeQuote(s, q), cr = clientRows(s, q, c), cur = c.currency;
+  const { s, q, c } = active(), cr = clientRows(s, q, c), cur = c.currency;
   const sv = cur === "SEK";
   const T = sv
-    ? { head: "Offert", startup: "Uppstart", disc: "Rabatt", sub: "Summa exkl. moms", vat: `Moms ${s.vatPercent} %`, inc: "Summa inkl. moms", m1: "Månad 1", m2: "Månad 2 och framåt", tot: n => `Totalt ${n} månader`, h: "h ×", mo: "mån", per: "Per månad:" }
-    : { head: "Quote", startup: "Setup fee", disc: "Discount", sub: "Subtotal", vat: `VAT ${s.vatPercent}%`, inc: "Total", m1: "Month 1", m2: "Month 2 onward", tot: n => `Total, ${n} months`, h: "h ×", mo: "mo", per: "Per month:" };
+    ? { head: "Offert", startup: "Uppstart", disc: "Rabatt", sub: "Summa exkl. moms", vat: `Moms ${s.vatPercent} %`, inc: "Summa inkl. moms", m1: "Månad 1", m2: "Månad 2 och framåt", tot: n => `Totalt ${n} månader`, h: "×", mo: "mån", per: "Per månad:" }
+    : { head: "Quote", startup: "Setup fee", disc: "Discount", sub: "Subtotal", vat: `VAT ${s.vatPercent}%`, inc: "Total", m1: "Month 1", m2: "Month 2 onward", tot: n => `Total, ${n} months`, h: "×", mo: "mo", per: "Per month:" };
   const out = [T.head + (q.name ? " — " + q.name : ""), ""];
   if (q.mode === "retainer") out.push(T.per);          // the line items below are monthly, say so
-  for (const l of cr.lines) out.push(pad(l.label, `${l.hours} ${T.h} ${fmt(l.hourly, cur)}`, fmt(l.amount, cur)));
+  for (const l of cr.lines) out.push(pad(l.label, `${hrs(l.hours)} ${T.h} ${fmt(l.hourly, cur)}`, fmt(l.amount, cur)));
 
   const t = clientTotals(s, q, c, cr);
   const discLine = ([kind, v]) => kind === "retainer"
@@ -818,7 +998,7 @@ function clientText() {
 }
 
 function internalText() {
-  const s = S(), q = Q(), c = computeQuote(s, q), cur = c.currency;
+  const { s, q, c } = active(), cur = c.currency;
   const line = (l, a) => l.padEnd(W + W2) + fmt(a, cur).padStart(13);
   const out = [`Internal — ${q.name || "unnamed"} · ${q.mode} · ${cur}`, ""];
   for (const [l, a, sub] of breakdownRows(s, q, c)) out.push(line((sub ? "  " : "") + l, a));
@@ -827,7 +1007,7 @@ function internalText() {
     out.push(line("Month 1", c.month1), line("Months 2+", c.monthly), line(`Contract value ${c.months} mo ex moms`, c.totalExVat));
   else out.push(line("Total ex moms", c.totalExVat));
   if (q.vatEnabled) out.push(line(`Moms ${s.vatPercent}%`, c.vat), line("Total ink moms", c.totalIncVat));
-  if (c.hours) out.push(line(`Effective rate (${c.hours} h)`, c.effectiveHourly));
+  if (c.hours) out.push(line(`Effective rate (${hrs(c.hours)})`, c.effectiveHourly));
   if (c.costSet) {
     out.push("", line("Internal cost", c.internalCost), line("Profit", c.profit),
       `Margin`.padEnd(W + W2) + pct(c.marginPercent).padStart(13));
@@ -871,6 +1051,18 @@ document.addEventListener("input", e => {
   save(); render();
 });
 
+/* Bounds live on the elements as min/max and are enforced on commit, not mid-keystroke — clamping
+   while someone types 100 would fight them at "1". The verdict guards itself regardless. */
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.type !== "number" || el.value === "") return;
+  const v = num(el.value);
+  const c = Math.min(el.max === "" ? Infinity : +el.max, Math.max(el.min === "" ? -Infinity : +el.min, v));
+  if (c === v) return;
+  el.value = c;
+  el.dispatchEvent(new Event("input", { bubbles: true }));   // one pipeline: let the input handler store it
+});
+
 /** Keep the twin rate-card editors (settings + first-run) in sync without stealing focus. */
 function renderRates0(el, row) {
   const other = (el.closest("#rates") ? $("setupRates") : $("rates"));
@@ -878,18 +1070,28 @@ function renderRates0(el, row) {
   if (twin) twin.value = el.value;
 }
 
-document.addEventListener("click", e => {
-  if (e.target.id === "toSettings") { e.preventDefault(); showView("settings"); return; }
+document.addEventListener("click", async e => {
+  if (e.target.id === "toSettings" || e.target.dataset.view === "settings") { e.preventDefault(); showView("settings"); return; }
   if (e.target.dataset.lrm) {                            // drop a line from this quote only
     Q().lines.splice(+e.target.dataset.lrm, 1);
     save(); renderLines(); render();
     return;
   }
   if (e.target.dataset.f !== "del") return;
-  const i = +e.target.closest("[data-r]").dataset.r, id = S().rates[i].id;
+  const i = +e.target.closest("[data-r]").dataset.r, rate = S().rates[i], id = rate.id;
+  const usedHere = Q().lines.filter(l => l.rateId === id);
+  const usedSaved = db.quotes.filter(q => q.lines.some(l => l.rateId === id));
+  if (usedHere.length || usedSaved.length) {
+    const parts = [];
+    if (usedHere.length) parts.push("the open quote line will be removed");
+    if (usedSaved.length) parts.push(`${usedSaved.length} saved quote${usedSaved.length === 1 ? "" : "s"} will keep a zero-rate deleted line until edited`);
+    const ok = await askConfirm(`Delete ${rate.label}?`, `${rate.label} is in use: ${parts.join(", ")}.`, "Delete rate", true);
+    if (!ok) return;
+  }
   S().rates.splice(i, 1);
   Q().lines = Q().lines.filter(l => l.rateId !== id);
   save(); renderRates(); renderLines(); render();
+  toast(`${rate.label} deleted`);
 });
 
 $("addFromCard").onchange = e => {
@@ -916,8 +1118,8 @@ $("addRate").onclick = () => {
 
 // currentTarget, not target: after the first copy the button holds an icon + span, and a
 // second click inside 1.3 s would otherwise stash "Copied" as the label to restore
-$("copyClient").onclick = e => copy(e.currentTarget, clientText());
-$("copyInternal").onclick = e => copy(e.currentTarget, internalText());
+$("copyClient").onclick = e => { if (!e.currentTarget.disabled) copy(e.currentTarget, clientText()); };
+$("copyInternal").onclick = e => { if (!e.currentTarget.disabled) copy(e.currentTarget, internalText()); };
 
 /* views */
 function showView(v) {
@@ -962,24 +1164,28 @@ function persistQuote(name) {
   if (i >= 0) db.quotes[i] = copy; else db.quotes.push(copy);
   // render too: the name in the header and the picker/Delete buttons all key off this
   save(); renderSaved(); render();
+  $("saveStatus").textContent = `Saved "${name}" ${when(q.updatedAt)}.`;
+  toast(`Saved "${name}"`);
 }
-$("qSave").onclick = () => {
-  const name = prompt("Quote name", Q().name || "");
+$("qSave").onclick = async () => {
+  const name = await askName("Save quote", "Quote name", Q().name || "");
   if (name) persistQuote(name);
 };
-$("qDup").onclick = () => {
-  const name = prompt("Name for the duplicate", (Q().name || "Quote") + " (copy)");
+$("qDup").onclick = async () => {
+  const name = await askName("Duplicate quote", "New quote name", (Q().name || "Quote") + " (copy)", "Duplicate");
   if (!name) return;                                  // cancel must not orphan the loaded quote
   Object.assign(Q(), { id: null, createdAt: null });
   persistQuote(name);
 };
-$("qDel").onclick = () => {
+$("qDel").onclick = async () => {
   const q = Q(), i = db.quotes.findIndex(x => x.id === q.id);
-  if (i < 0) return alert("This quote isn't saved yet.");
-  if (!confirm(`Delete "${q.name}"?`)) return;
+  if (i < 0) { toast("This quote is not saved yet."); return; }
+  if (!await askConfirm(`Delete "${q.name}"?`, "The saved quote will be removed. Your rate card and presets stay unchanged.", "Delete quote", true)) return;
   db.quotes.splice(i, 1);
   db.quote = newQuote(S());
   save(); renderSaved(); renderInputs(); renderLines(); render();
+  $("saveStatus").textContent = `Deleted "${q.name}".`;
+  toast(`Deleted "${q.name}"`);
 };
 $("savedSel").onchange = e => {
   const q = db.quotes.find(x => x.id === e.target.value);
@@ -994,15 +1200,18 @@ function renderPresets() {
   $("presetSel").innerHTML = '<option value="">— preset —</option>' +
     Object.keys(db.presets).map(n => `<option>${esc(n)}</option>`).join("");
 }
-$("presetSave").onclick = () => {
-  const name = prompt("Preset name", $("presetSel").value || "standard");
+$("presetSave").onclick = async () => {
+  const name = await askName("Save preset", "Preset name", $("presetSel").value || "standard");
   if (!name) return;
   db.presets[name] = JSON.parse(JSON.stringify(Object.fromEntries(PRESET_KEYS.map(k => [k, S()[k]]))));
   save(); renderPresets(); $("presetSel").value = name;
+  toast(`Preset "${name}" saved`);
 };
-$("presetDel").onclick = () => {
+$("presetDel").onclick = async () => {
   const n = $("presetSel").value;
-  if (n && confirm(`Delete preset "${n}"?`)) { delete db.presets[n]; save(); renderPresets(); }
+  if (n && await askConfirm(`Delete preset "${n}"?`, "The preset will be removed. Current settings and saved quotes stay unchanged.", "Delete preset", true)) {
+    delete db.presets[n]; save(); renderPresets(); toast(`Preset "${n}" deleted`);
+  }
 };
 $("presetSel").onchange = e => {
   const p = db.presets[e.target.value];
@@ -1028,13 +1237,18 @@ $("footExport").onclick = e => { e.preventDefault(); doExport(); };
 $("impBtn").onclick = () => $("impFile").click();
 $("impFile").onchange = async e => {
   try {
-    const data = JSON.parse(await e.target.files[0].text());
+    const file = e.target.files[0];
+    if (!file) return;
+    const data = JSON.parse(await file.text());
     if (!data.settings || !Array.isArray(data.settings.rates)) throw new Error("not a backup file");
     const n = (data.quotes || []).length;
-    if (!confirm(`Replace current settings, presets and quotes with this file (${n} saved quote${n === 1 ? "" : "s"})?`)) return;
+    if (!await askConfirm("Import backup?", `This replaces current settings, presets and quotes with this file (${n} saved quote${n === 1 ? "" : "s"}).`, "Import backup")) return;
     db = hydrate(data);
     save(); renderPresets(); renderSaved(); renderRates(); renderInputs(); renderLines(); render();
-  } catch (err) { alert("Import failed: " + err.message); }
+    toast("Backup imported");
+  } catch {
+    toast("Import failed. Choose a pricing backup JSON file and try again.");
+  }
   finally { e.target.value = ""; }
 };
 
@@ -1048,10 +1262,10 @@ function fxNote(date, cached) {
   const blank = FX_CURS.filter(c => !(S().fx[c] > 0));
   $("fxNote").className = blank.length ? "hint bad" : "hint";
   $("fxNote").textContent = blank.length
-    ? `No rate for ${blank.join(", ")} — quotes in ${blank.length === 1 ? "it" : "them"} convert 1:1 until you set one.`
-    : S().fxManualOverride ? "Manual rates — the live rates are ignored."
+    ? `No rate for ${blank.join(", ")}. Quotes in ${blank.length === 1 ? "it" : "them"} convert 1:1 until you set one.`
+    : S().fxManualOverride ? "Manual rates: the live rates are ignored."
     : date ? `ECB ${date}${cached ? " (cached)" : ""}`
-    : "No live rates yet — enter them manually.";
+    : "No live rates yet. Enter them manually.";
 }
 function applyFx(fx, date) {
   Object.assign(S(), { fx: { ...S().fx, ...fx }, fxRateDate: date });
@@ -1159,6 +1373,16 @@ function selfCheck() {
     ok(`budget inc-vat ${mode}`, solveBudget(s, qq, t * 1.25, true).hours, 10, 0.001);
   }
   ok("budget below fixed costs", solveBudget(s, q, 1000, false).impossible ? 1 : 0, 1);
+
+  // a discount past 100 % drives revenue negative; profit/revenue then flips sign and would
+  // otherwise score the worst quote in the app as the healthiest. Revenue is judged first.
+  const wipeout = computeQuote(s, { ...q, discountPercent: 500 });
+  ok("500% discount is negative revenue", wipeout.totalExVat < 0 ? 1 : 0, 1);
+  ok("...and the verdict reads bad, not good", verdictClass(s, wipeout) === "bad" ? 1 : 0, 1);
+  ok("...and its ratio would have lied", wipeout.marginPercent > 0 ? 1 : 0, 1);
+  ok("healthy quote still reads good", verdictClass(s, computeQuote(s, q)) === "good" ? 1 : 0, 1);
+  ok("empty quote cannot be copied", canCopyQuote(computeQuote(s, { ...q, lines: [{ rateId: 1, hours: 0 }] })) ? 1 : 0, 0);
+  ok("quote with hours can be copied", canCopyQuote(computeQuote(s, q)) ? 1 : 0, 1);
 
   // client doc must add up from its own printed lines, and land on the same total as the internal one
   // synthetic fixtures on purpose — §12's rule is no plausible copy of the real rate card in the repo
