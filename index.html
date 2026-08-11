@@ -3,265 +3,271 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Rate &amp; Pricing Calculator</title>
-<meta name="theme-color" content="#f6f5f3" media="(prefers-color-scheme:light)">
-<meta name="theme-color" content="#121214" media="(prefers-color-scheme:dark)">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f0f0f'/%3E%3Crect x='14' y='14' width='36' height='36' rx='8' fill='%23ffffff'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-/* ══════════ tokens ══════════ */
+/* ══════════ Graphite Console tokens ══════════ */
+@font-face{font-family:"Geist";src:url("fonts/Geist-Variable.woff2") format("woff2");
+  font-weight:100 900;font-display:swap}
 :root{
-  color-scheme:light dark;
-  --bg:#f6f5f3; --panel:#fff;
-  --fill:rgba(0,0,0,.05); --fill-hi:rgba(0,0,0,.085);
-  --line:rgba(0,0,0,.11); --hair:rgba(0,0,0,.065);
-  --ink:#1b1a18; --dim:#6f6b64;      /* 4.9:1 on --bg; the old #78746d measured 4.3:1 at 12.5px */
-  --accent:#0071E3; --fill-accent:#006edb; --accent-ink:#0066CC; --on-accent:#fff;
-  --good:#12693f; --warn:#8f5600; --bad:#b3261e; --green-fill:#34C759;
-  /* tint-hi carries the failing verdicts. Not a multiple of --tint: the same emphasis step that
-     darkens a light panel lightens a dark one, so each theme needs its own value to hold AA. */
-  --tint:7%; --tint-hi:14%;
-  --glass:rgba(246,245,243,.72);
-  --shadow:0 1px 2px rgba(0,0,0,.05),0 14px 30px -18px rgba(0,0,0,.2);
-  --thumb:0 0 0 .5px rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.12);
-  --r:14px; --rs:10px;
-  /* iOS-ish critically damped curve — snappy in, no overshoot */
-  --ease:cubic-bezier(.32,.72,0,1);
+  color-scheme:dark;
+  /* surface ladder — elevation is lightness, not shadow */
+  --bg-0:#0f0f0f; --bg-1:#171717; --bg-2:#222222; --bg-3:#2e2e2e; --bg-4:#3a3a3a;
+  /* ink ladder */
+  --ink-hi:#f2f2f2; --ink-mid:#b3b3b3; --ink-low:#8a8a8a; --ink-faint:#5f5f5f;
+  --hairline:rgba(255,255,255,.08);
+  /* inverse pair — the only accent */
+  --inverse-bg:#ffffff; --inverse-ink:#101010;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
+  --row-h:48px; --pad-control:16px; --pad-panel:20px; --gap-row:10px;
+  --ease:cubic-bezier(.25,.1,.25,1); --t-fast:120ms; --t-med:180ms;
 }
-@media (prefers-color-scheme:dark){:root{
-  --bg:#121214; --panel:#1c1c1f;
-  --fill:rgba(255,255,255,.07); --fill-hi:rgba(255,255,255,.12);
-  --line:rgba(255,255,255,.13); --hair:rgba(255,255,255,.08);
-  --ink:#ecebe8; --dim:#97938c;
-  --accent:#0A84FF; --fill-accent:#0060DF; --accent-ink:#62adff; --on-accent:#fff;
-  --good:#4ec07f; --warn:#e0a33a; --bad:#f2796d; --green-fill:#30D158;
-  --tint:15%; --tint-hi:18%;
-  --glass:rgba(18,18,20,.72);
-  --shadow:0 0 0 .5px rgba(255,255,255,.03),0 12px 28px -18px rgba(0,0,0,.9),0 2px 8px rgba(0,0,0,.42);
-  --thumb:0 0 0 .5px rgba(255,255,255,.07),0 1px 3px rgba(0,0,0,.5);
-}}
 
 /* ══════════ base ══════════ */
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",ui-sans-serif,"Segoe UI",Roboto,sans-serif;
+body{margin:0;background:var(--bg-0);color:var(--ink-mid);
+  font:15px/1.5 "Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
-main{max-width:1060px;margin:0 auto;padding:0 20px 56px}
+main{max-width:1060px;margin:0 auto;padding:0 24px 56px}
 
-/* translucent chrome — content scrolls under it, edge fades instead of a rule */
 header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;
-  margin:0 -20px 20px;padding:16px 20px 13px;
-  background:var(--glass);backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%)}
-header::after{content:"";position:absolute;left:0;right:0;top:100%;height:18px;pointer-events:none;
-  background:linear-gradient(var(--glass),transparent)}
+  margin:0 -24px 24px;padding:13px 24px;background:var(--bg-0);
+  border-bottom:1px solid var(--hairline)}
 .brand{flex:1;min-width:0}
-h1{margin:0;font-size:19px;font-weight:640;letter-spacing:-.016em;line-height:1.2}
-/* the working document's name — the one thing only the chrome can tell you */
-/* vibrancy: over glass, small text needs a touch more weight and tracking than it would on paper */
-#quoteLabel{margin:1px 0 0;font-size:12.5px;font-weight:490;letter-spacing:.008em;line-height:1.35;
-  color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#quoteLabel.draft{font-style:italic}
+h1{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em;line-height:1.25;color:var(--ink-hi)}
+#quoteLabel{margin:2px 0 0;font-size:12.5px;font-weight:500;line-height:1.35;
+  color:var(--ink-low);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* state via wording ("Unsaved quote"), not an ink drop below the contrast floor */
+#quoteLabel.draft{color:var(--ink-low)}
 
 .cols{display:grid;gap:20px;grid-template-columns:1fr}
 @media (min-width:860px){
   .cols{grid-template-columns:minmax(0,1fr) minmax(0,.94fr);align-items:start}
-  @media (min-height:780px){#quoteView>section:last-child{position:sticky;top:88px}}
+  @media (min-height:780px){#quoteView>section:last-child{position:sticky;top:84px}}
 }
-section{background:var(--panel);border-radius:var(--r);padding:20px;min-width:0;
-  box-shadow:0 0 0 .5px var(--hair),var(--shadow)}
+section{background:var(--bg-1);border-radius:var(--r-xl);padding:var(--pad-panel);min-width:0}
 
-/* a view enters from where it came: Settings from the right, under its button; Quote back leftward.
-   display:none → visible restarts the animation on its own, so the toggle needs no motion code. */
 @keyframes viewin{from{opacity:0;transform:translateX(var(--from,0))}}
-#quoteView,#settingsView,#firstRun{animation:viewin .34s var(--ease)}
-#settingsView{--from:18px}
-#quoteView{--from:-18px}
+#quoteView,#settingsView{animation:viewin var(--t-med) var(--ease)}
+#settingsView{--from:14px}
+#quoteView{--from:-14px}
 
 /* ══════════ type ══════════ */
-h2{margin:0 0 16px;font-size:15px;font-weight:640;letter-spacing:-.012em}
-h3{margin:26px 0 10px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--dim)}
+h2{margin:0 0 18px;font-size:19px;font-weight:650;letter-spacing:-.005em;color:var(--ink-hi)}
+h3{margin:28px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--hairline);
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-low)}
 section>h3:first-child{margin-top:0}
-label{display:block;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
-a{color:var(--accent-ink);text-decoration:none;font-weight:500}
-.hint{margin:6px 0 12px;font-size:13px;line-height:1.5;color:var(--dim)}
-.eff{color:var(--dim);font-size:13px;white-space:nowrap}
-/* tracking is size-specific: headings tighten as they grow, the small stuff opens up to stay readable */
-label,legend,.hint,.eff,footer,tr.sub td,tr.muted td,.quotebar button,.quotebar select{letter-spacing:.006em}
+h3 .eff{text-transform:none;letter-spacing:.01em;font-weight:500;font-size:12px;color:var(--ink-low)}
+label{display:block;font-size:15px;color:var(--ink-mid)}
+a{color:var(--ink-hi);font-weight:500;text-decoration:underline;
+  text-decoration-color:var(--ink-faint);text-underline-offset:3px}
+.hint{margin:10px 0 12px;font-size:13px;line-height:1.55;color:var(--ink-low)}
+.eff{color:var(--ink-low);font-size:13px;white-space:nowrap}
+.flabel{display:block;margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-low)}
 
 /* ══════════ controls ══════════ */
-input,select,button{font:inherit;font-size:15px;color:var(--ink);
-  border:1px solid var(--line);border-radius:var(--rs);padding:7px 10px;min-height:40px;background:var(--panel);
-  transition:background .15s,border-color .15s,color .15s,opacity .15s,transform .1s ease-out}
-input:not([type=checkbox]):not([type=radio]):not([type=file]),select{
-  background:var(--fill);border-color:transparent}
-input:not([type=checkbox]):not([type=radio]):not([type=file]):focus,select:focus{background:var(--panel);border-color:var(--line)}
-/* "+ from rate card" disables itself once every priced rate is in the quote — it has to look it */
-select:disabled{opacity:.5;cursor:default}
-:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-input:focus-visible,select:focus-visible{outline-offset:0}
-button{cursor:pointer;background:var(--fill);border-color:transparent;
-  font-size:14px;padding:7px 13px;
-  display:inline-flex;align-items:center;gap:7px}
-/* one drawn icon family: 24-unit grid, 1.8 stroke, round caps.
-   pointer-events:none is load-bearing, not decoration: the delegated click handler reads
-   e.target.dataset, and without this a click on the glyph targets the <svg>/<use> instead of
-   the button — which silently killed Remove line and Delete rate on a centred click. */
-.ic{width:16px;height:16px;flex:0 0 auto;display:block;pointer-events:none;
-  fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-button:active{transform:scale(.96)}              /* feedback on press, not on release */
-button.primary{background:var(--fill-accent);color:var(--on-accent)}
-button:disabled{opacity:.48;cursor:not-allowed;transform:none}
-/* we draw our own press states — iOS's grey tap flash lands on top of them, and control
-   labels aren't prose anyone wants to select by accident */
+input,select,button{font:inherit;font-size:15px;color:var(--ink-hi);border:0;
+  border-radius:var(--r-md);padding:0 var(--pad-control);min-height:var(--row-h);
+  background:var(--bg-2);
+  transition:background var(--t-fast) var(--ease),color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease)}
+input:not([type=checkbox]):not([type=file]){font-weight:500}
+input::placeholder{color:var(--ink-low);font-weight:400}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+input:not([type=checkbox]):not([type=file]):focus,select:focus{background-color:var(--bg-3)}
+select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%238a8a8a'%3E%3Cpath d='M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 48 88h160a8 8 0 0 1 5.66 13.66Z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:11px}
+select:disabled{opacity:.45;cursor:default}
+:focus-visible{outline:2px solid var(--ink-low);outline-offset:2px}
+button{cursor:pointer;font-size:15px;font-weight:500;padding:0 18px;color:var(--ink-mid);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px}
+button.primary,button.bad{background:var(--inverse-bg);color:var(--inverse-ink);font-weight:600}
+button.dashed{width:100%;background:transparent;color:var(--ink-low);
+  border:1px dashed rgba(255,255,255,.22)}
+.bar button.dashed{width:auto;flex:1 1 150px}
+button.text{background:transparent;color:var(--ink-low);padding:0 10px}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:active:not(:disabled){filter:brightness(.86)}
 button,label{-webkit-tap-highlight-color:transparent}
 button{-webkit-user-select:none;user-select:none}
+/* one icon family: Phosphor, filled where weight helps, 256 grid.
+   pointer-events:none is load-bearing: the delegated click handler reads e.target.dataset,
+   and without it a click on the glyph targets the <svg>/<use> instead of the button. */
+.ic{width:16px;height:16px;flex:0 0 auto;display:block;pointer-events:none;fill:currentColor}
 
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
-.row>div{flex:1 1 90px;min-width:0}
-.row>.eff{flex:1 1 auto;padding-bottom:9px}
-.row input,.row select{width:100%}
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+/* ══════════ segmented control — the system's one option picker ══════════ */
+.seg{display:flex;background:var(--bg-2);border-radius:var(--r-md);padding:3px;height:var(--row-h)}
+.seg button{flex:1;min-height:0;height:100%;border:0;background:transparent;border-radius:9px;
+  color:var(--ink-low);font-size:14px;font-weight:500;padding:0 8px;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--bg-3);color:var(--ink-hi)}
+.seg button:focus-visible{outline-offset:-2px}
+.fld{margin-bottom:var(--gap-row)}
+.pickers{margin-bottom:8px}
+.pickrow{display:grid;gap:var(--gap-row);grid-template-columns:1.55fr 1fr}
+
+/* ══════════ control rows: label left, value right ══════════ */
+.crow{display:flex;align-items:center;gap:10px;min-height:var(--row-h);
+  background:var(--bg-2);border-radius:var(--r-md);
+  padding:4px 6px 4px var(--pad-control);margin-bottom:var(--gap-row)}
+.crow label{flex:1 1 auto;min-width:0;margin:0}
+.crow input,.crow select{flex:0 0 auto;width:108px;min-height:40px;
+  background:transparent;border-radius:9px;padding:0 10px;text-align:right}
+
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .bar select{flex:1 1 170px;min-width:0}
-/* saving is occasional — the bar sits under the quote, quiet, not above it */
-.quotebar{margin:22px 0 0;padding-top:14px;border-top:1px solid var(--hair)}
-.quotebar button,.quotebar select{font-size:14px;padding:7px 11px}
-.quotebar select{flex:0 1 190px}
+.quotebar{margin:24px 0 0;padding-top:16px;border-top:1px solid var(--hairline);margin-bottom:0}
+.quotebar select{flex:0 1 200px}
 fieldset{border:0;padding:0;margin:0;min-width:0}
-legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--dim)}
+legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--ink-low)}
 
-.check{display:flex;gap:10px;align-items:center;margin:0;padding:9px 0;
-  font-size:15px;color:var(--ink)}
-.check+.check{border-top:1px solid var(--hair)}
-/* ponytail: appearance:none makes the native checkbox the toggle — keeps label/for wiring and the checked state free */
-.check input{appearance:none;-webkit-appearance:none;position:relative;flex:0 0 auto;
-  width:51px;height:31px;margin:0;padding:0;border:0;border-radius:999px;
-  background:var(--fill-hi);cursor:pointer;transition:background .2s}
-.check input::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;
-  border-radius:50%;background:#fff;box-shadow:var(--thumb);transition:transform .24s var(--ease)}
-.check input:checked{background:var(--green-fill)}
-.check input:checked::after{transform:translateX(20px)}
+/* ══════════ checklist row — no switches in this system ══════════ */
+.check{display:flex;gap:14px;align-items:center;margin:0;padding:4px 0;min-height:52px;
+  font-size:15px;color:var(--ink-mid);cursor:pointer}
+.check+.check{border-top:1px solid var(--hairline)}
+.check input{appearance:none;-webkit-appearance:none;flex:0 0 auto;
+  width:24px;height:24px;min-height:24px;margin:0;padding:0;border-radius:7px;
+  background:var(--bg-2);border:1px solid var(--hairline);cursor:pointer;
+  background-repeat:no-repeat;background-position:center;background-size:14px}
+.check input:checked{background-color:var(--bg-3);border-color:transparent;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%23f2f2f2'%3E%3Cpath d='M229.66 77.66l-128 128a8 8 0 0 1-11.32 0l-56-56a8 8 0 0 1 11.32-11.32L96 188.69 218.34 66.34a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E")}
 .check .eff{margin-left:auto}
 
-.lines{display:grid;margin-bottom:18px}
-/* min-width:0 — without it the grid track sizes to the row's min-content and the remove
-   button is drawn outside the card at 320px */
-.lines div{display:flex;gap:12px;align-items:center;padding:5px 0;min-width:0}
-.lines div+div{border-top:1px solid var(--hair)}
-.lines label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-  flex:1;min-width:0;margin:0;color:var(--ink);font-size:15px}
-.lines label span{color:var(--dim);font-size:13px}
-.lines input{flex:0 0 auto;width:84px;text-align:right}
+/* ══════════ quote lines & rate card rows ══════════ */
+.lines{display:grid;gap:8px;margin-bottom:14px}
+.lines>div{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0;min-height:var(--row-h);
+  background:var(--bg-2);border-radius:var(--r-md);padding:4px 6px 4px var(--pad-control)}
+.lines label{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;
+  gap:2px 10px;flex:1;min-width:0;margin:0;color:var(--ink-mid);font-size:15px}
+.lines label span{color:var(--ink-low);font-size:13px;white-space:nowrap}
+.lines label span.bad{color:var(--ink-hi);font-weight:600}
+.lines input{flex:0 0 auto;width:76px;min-height:40px;background:transparent;
+  border-radius:9px;padding:0 10px;text-align:right}
 .lines .lbl{flex:1 1 90px;width:auto;min-width:0;text-align:left}
-.lines .rt{width:96px}
-.lines .del{align-self:center}
-/* squared to the input height: 30px left the glyph sitting low beside the field and gave the
-   one destructive control in the row the smallest target on screen. Round, so an icon-only
-   button never reads as another rectangular field. */
-.del{flex:0 0 auto;align-self:flex-end;width:40px;height:40px;padding:0;justify-content:center;
-  border-radius:50%;background:transparent;color:var(--dim)}
-/* every hover state lives here: on touch, :hover sticks after the tap and the control
-   stays lit up long after the finger is gone */
-@media (hover:hover){
-  a:hover{text-decoration:underline}
-  input:not([type=checkbox]):not([type=radio]):not([type=file]):hover,select:hover{background:var(--fill-hi)}
-  button:hover{background:var(--fill-hi)}
-  button.primary:hover{background:var(--fill-accent);opacity:.9}
-  .del:hover{background:var(--fill);color:var(--bad)}
-}
-/* rate card: column headings once, not on every row (inputs carry their own aria-label) */
-#rates .row:not(:first-child) label,#setupRates .row:not(:first-child) label{display:none}
-#rates .row,#setupRates .row{margin-bottom:8px}
+.lines .rt{width:92px}
+/* a one-off line is three editable cells — recess them so their bounds read on bg-2 */
+.lines div:has(.lbl) input{background:var(--bg-1)}
+
+.rrow,.cols-head{display:grid;grid-template-columns:minmax(0,1fr) 104px 84px 40px;
+  gap:8px;align-items:center}
+.rrow{background:var(--bg-2);border-radius:var(--r-md);min-height:var(--row-h);
+  padding:4px 6px 4px var(--pad-control);margin-bottom:8px}
+.cols-head{padding:0 6px 6px var(--pad-control);font-size:12px;font-weight:500;color:var(--ink-low)}
+.cols-head span:nth-child(2){text-align:right;padding-right:10px}
+.rrow input,.rrow select{width:100%;min-height:40px;background:transparent;
+  border-radius:9px;padding:0 10px}
+.rrow input[data-f=hourly]{text-align:right}
+.rrow select{background-position:right 8px center;padding-right:28px}
+
+.del{flex:0 0 auto;width:40px;height:40px;min-height:40px;padding:0;justify-content:center;
+  border-radius:10px;background:transparent;color:var(--ink-low)}
 
 /* ══════════ breakdown ══════════ */
 table{width:100%;border-collapse:collapse}
-td{padding:4px 0;vertical-align:baseline}
-td+td{text-align:right;white-space:nowrap;padding-left:14px}
-tr.sub td{padding:1px 0 1px 16px;color:var(--dim);font-size:13.5px}
+td{padding:5px 0;vertical-align:baseline;color:var(--ink-mid)}
+td+td{text-align:right;white-space:nowrap;padding-left:14px;color:var(--ink-hi);font-weight:500}
+tr.sub td,tr.sub td+td{padding:2px 0 2px 16px;color:var(--ink-low);font-size:13px;font-weight:400}
 tr.sub td:first-child{white-space:nowrap}
 tr.sub td+td{padding-left:14px}
-tr.rule td{border-top:1px solid var(--line);padding-top:12px}
-tr.total td{padding-top:12px;font-size:15px;font-weight:590}
-tr.total td+td{font-size:30px;font-weight:640;letter-spacing:-.026em;line-height:1.05}
-tr.muted td{color:var(--dim);font-size:13.5px}
-tr.retainer-key td{font-size:15px;font-weight:590}
-tr.retainer-key td+td{font-size:23px;font-weight:640;letter-spacing:-.018em;line-height:1.1}
-.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-.margin-line{--t:var(--tint);display:flex;align-items:center;gap:9px;
-  margin:0 0 14px;padding:11px 13px;border-radius:var(--rs);
-  font-size:15px;font-weight:590;letter-spacing:-.01em;
-  background:color-mix(in srgb,currentColor var(--t),transparent)}
-/* a bad verdict must not read at the same volume as an all-clear: double tint and a rule down
-   the edge, so "below target" is visibly a different kind of statement from "above" */
-.margin-line.warn,.margin-line.bad{--t:var(--tint-hi);padding-left:16px;
-  box-shadow:inset 3px 0 0 currentColor}
-/* weight, not opacity, sets this apart — dimming it drops the amber under 4.5:1 */
-.margin-line small{font-size:inherit;font-weight:460}
-/* the verdict is the reason this tool exists — its mark carries the badge scale, not the UI scale */
-.margin-line .ic{width:19px;height:19px;stroke-width:1.7}
+tr.rule td{border-top:1px solid var(--hairline);padding-top:14px}
+tr.total td{padding-top:14px;font-size:15px;font-weight:500}
+tr.total td+td{font-size:31px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
+tr.muted td,tr.muted td+td{color:var(--ink-low);font-size:13px;font-weight:400}
+tr.retainer-key td{font-size:15px;font-weight:500}
+tr.retainer-key td+td{font-size:22px;font-weight:650;letter-spacing:-.015em;line-height:1.1}
+.good,.warn,.bad{color:var(--ink-hi)}
+.hint.bad{color:var(--ink-hi);font-weight:500}
 
-/* ══════════ setup & footer ══════════ */
-.steps{max-width:560px;margin:clamp(48px,16vh,140px) auto}
-#stepLabel{margin-bottom:6px;font-size:11.5px;font-weight:620;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--dim)}
-.steps legend{margin-bottom:16px;font-size:19px;font-weight:620;line-height:1.3;
-  letter-spacing:-.016em;color:var(--ink)}
-footer{max-width:1060px;margin:0 auto;padding:4px 20px 56px;font-size:12.5px;color:var(--dim)}
-footer a{text-underline-offset:2px}
-footer a.nudge{color:var(--warn);font-weight:600}
-footer button,.hint button{font-size:12.5px;padding:5px 10px}
-footer a{display:inline-flex;align-items:center;min-height:24px}
-pre{font-family:ui-monospace,SFMono-Regular,monospace;font-size:12px;white-space:pre-wrap;color:var(--dim)}
+/* the verdict is the reason this tool exists. Pass speaks at control volume;
+   a failing verdict borrows the inverse pair — the loudest voice the system has. */
+.margin-line{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;
+  padding:13px var(--pad-control);border-radius:var(--r-md);
+  font-size:15px;font-weight:600;letter-spacing:-.005em;
+  background:var(--bg-2);color:var(--ink-hi)}
+.margin-line.warn,.margin-line.bad{background:var(--inverse-bg);color:var(--inverse-ink)}
+.margin-line small{font-size:inherit;font-weight:500;opacity:.72}
+.margin-line .ic{width:20px;height:20px;margin-top:1px}
+.copyrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+
+/* ══════════ footer ══════════ */
+footer{max-width:1060px;margin:0 auto;padding:8px 24px 56px;font-size:13px;color:var(--ink-low)}
+footer a{color:var(--ink-low);font-weight:500;display:inline-flex;align-items:center;min-height:24px}
+footer a.nudge{color:var(--ink-hi);font-weight:600;text-decoration-color:var(--ink-low)}
+.hint button{min-height:34px;padding:0 12px;font-size:13px;border-radius:var(--r-sm)}
+pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  white-space:pre-wrap;color:var(--ink-low)}
 
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
   clip:rect(0,0,0,0);white-space:nowrap;border:0}
-#saveStatus{min-height:20px;margin:10px 0 0;font-size:13px;color:var(--dim)}
-#toast{position:fixed;left:50%;bottom:22px;z-index:50;max-width:min(420px,calc(100vw - 32px));
-  transform:translate(-50%,10px);opacity:0;pointer-events:none;padding:10px 14px;border-radius:999px;
-  background:var(--ink);color:var(--bg);box-shadow:var(--shadow);font-size:14px;font-weight:520;
-  transition:opacity .18s var(--ease),transform .18s var(--ease)}
+#saveStatus{min-height:20px;margin:10px 0 0;font-size:13px;color:var(--ink-low)}
+#toast{position:fixed;left:50%;bottom:24px;z-index:50;max-width:min(420px,calc(100vw - 32px));
+  transform:translate(-50%,10px);opacity:0;pointer-events:none;padding:11px 18px;
+  border-radius:999px;background:var(--inverse-bg);color:var(--inverse-ink);
+  font-size:14px;font-weight:600;
+  transition:opacity var(--t-med) var(--ease),transform var(--t-med) var(--ease)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-dialog{width:min(420px,calc(100vw - 32px));border:0;border-radius:18px;padding:0;
-  color:var(--ink);background:var(--panel);box-shadow:0 0 0 .5px var(--hair),0 24px 80px rgba(0,0,0,.32)}
-dialog::backdrop{background:rgba(0,0,0,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.dialog-body{padding:20px}
-.dialog-body h2{margin-bottom:8px;font-size:17px}
-.dialog-body p{margin:0 0 16px;color:var(--dim);font-size:14px}
-.dialog-body input{width:100%;margin-bottom:16px}
-.dialog-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+dialog{width:min(400px,calc(100vw - 32px));border:1px solid var(--hairline);
+  border-radius:var(--r-xl);padding:0;color:var(--ink-mid);background:var(--bg-1)}
+dialog::backdrop{background:rgba(0,0,0,.62)}
+.dialog-body{padding:24px}
+.dialog-body h2{margin:0 0 8px;font-size:20px;font-weight:700;letter-spacing:-.01em;text-align:center}
+.dialog-body p{margin:0 0 18px;color:var(--ink-low);font-size:14px;text-align:center}
+.dialog-body label{margin-bottom:6px;font-size:13px;color:var(--ink-low)}
+.dialog-body input{width:100%;margin-bottom:18px}
+.dialog-actions{display:flex;gap:10px}
+.dialog-actions button{flex:1}
 
 [hidden]{display:none!important}
-/* ponytail: display:revert would roll back to the UA value, not to .row{display:flex} — so name the type */
 .only-project,.only-retainer,.only-hourly,.only-budget,.only-foreign{display:none}
-body.mode-project .row.only-project,body.mode-retainer .row.only-retainer{display:flex}
+body.mode-project .crow.only-project,body.mode-retainer .crow.only-retainer{display:flex}
 body.mode-hourly label.only-hourly{display:flex}
 body.mode-retainer span.only-retainer{display:inline}
 body.dir-budget div.only-budget{display:block}
 body:not(.cur-SEK) p.only-foreign{display:block}
 
-/* ══════════ accessibility preferences ══════════ */
-/* gentler, not gone: colour and opacity still respond, nothing travels across the screen */
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{transition-property:background-color,color,border-color,opacity,box-shadow!important}
-  #quoteView,#settingsView,#firstRun{--from:0px}    /* cross-fade in place, no slide */
+/* ══════════ hover — state is one step up the ladder ══════════ */
+@media (hover:hover){
+  a:hover{text-decoration-color:currentColor}
+  button:where(:hover:not(:disabled)){background:var(--bg-3);color:var(--ink-hi)}
+  button.primary:hover:not(:disabled),button.bad:hover:not(:disabled){
+    background:var(--inverse-bg);color:var(--inverse-ink);filter:brightness(.9)}
+  button.dashed:hover{background:transparent;color:var(--ink-hi);
+    border-color:rgba(255,255,255,.4)}
+  button.text:hover{background:transparent;color:var(--ink-hi)}
+  .seg button:hover:not([aria-pressed="true"]){background:transparent;color:var(--ink-mid)}
+  .del:hover{background:var(--bg-3);color:var(--ink-hi)}
+  input:not([type=checkbox]):not([type=file]):hover,select:hover:not(:disabled){
+    background-color:var(--bg-3)}
+  .check input:hover:not(:checked){background-color:var(--bg-3)}
 }
-@media (prefers-reduced-transparency:reduce){
-  header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
-  header::after{background:linear-gradient(var(--bg),transparent)}
+
+/* ══════════ accessibility preferences ══════════ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  #quoteView,#settingsView{--from:0px}
 }
 @media (prefers-contrast:more){
-  :root{--line:rgba(0,0,0,.55);--hair:rgba(0,0,0,.3);--dim:#4b473f;--fill:rgba(0,0,0,.09)}
-  @media (prefers-color-scheme:dark){
-    :root{--line:rgba(255,255,255,.55);--hair:rgba(255,255,255,.3);--dim:#c6c2ba}
-  }
-  section{box-shadow:0 0 0 1px var(--line)}
-  input:not([type=checkbox]):not([type=radio]):not([type=file]),select,button{border-color:var(--line)}
+  :root{--hairline:rgba(255,255,255,.3);--ink-low:#a9a9a9;--ink-faint:#8a8a8a;
+    --bg-2:#262626;--bg-3:#343434}
+  input:not([type=checkbox]),select,button{box-shadow:inset 0 0 0 1px var(--hairline)}
+  button.primary,button.bad{box-shadow:none}
+}
+
+/* the verdict is why the tool exists — on one column it must not sit below a page of inputs */
+@media (max-width:859px){
+  #quoteView>section:last-child{order:-1}
 }
 @media (max-width:600px){
   main{padding-inline:14px}
   header{margin-inline:-14px;padding-inline:14px}
-  button,.quotebar button,.hint button,select,input:not([type=checkbox]):not([type=radio]):not([type=file]){min-height:44px}
-  .del{width:44px;height:44px}
-  footer a{min-height:44px}
+  section{padding:16px;border-radius:var(--r-lg)}
+  .pickrow{grid-template-columns:1fr}
+  .del{width:44px;height:44px;min-height:44px}
+  .lines input,.rrow input,.rrow select{min-height:44px}
   #quote tbody{display:block}
   #quote tr{display:grid;grid-template-columns:minmax(0,1fr) max-content;column-gap:10px}
   #quote td{display:block;min-width:0}
@@ -269,29 +275,58 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   #quote tr.sub{grid-template-columns:1fr}
   #quote tr.sub td{padding-left:0}
   #quote tr.sub td:first-child{white-space:normal}
-  #quote tr.total td+td{font-size:24px}
-  #quote tr.retainer-key td+td{font-size:21px}
+  #quote tr.total td+td{font-size:26px}
+  #quote tr.retainer-key td+td{font-size:20px}
+}
+@media (max-width:520px){
+  .lines .lbl{flex:1 1 100%}
+  /* two-line control row: label + value first, the money effect on its own line below */
+  .crow{flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+  .crow label{flex:1 1 calc(100% - 130px)}
+  .crow .eff{order:3;flex:1 1 100%;text-align:right;padding:0 10px 4px 0;margin-top:-6px}
+  .crow .eff:empty{display:none}
+  .cols-head{display:none}
+  .rrow{grid-template-columns:minmax(0,1fr) 92px 44px;
+    grid-template-areas:"lbl lbl del" "hr cur del";row-gap:2px;padding-top:6px;padding-bottom:6px}
+  .rrow [data-f=label]{grid-area:lbl}
+  .rrow [data-f=hourly]{grid-area:hr}
+  .rrow [data-f=currency]{grid-area:cur}
+  .rrow .del{grid-area:del;align-self:center}
 }
 </style>
 
-<!-- One drawn family on a 24-unit grid, ink centred on (12,12).
-     Controls: bare glyphs, 12 units of ink (16 where the glyph is inherently wide).
-     Verdicts: enclosed badges, ~18 units, so the mark stays one size as the state changes
-     and never reads as something you can press.
-     Slider knobs are solid dots, not rings: at 16px a 1.2px track running through an unfilled
-     circle is a smudge, and a perpendicular tick instead of a knob reads as "≠".
-     fill/stroke attributes are the only override that reaches inside a <use>, where a CSS
-     selector cannot follow. -->
+<body>
+<!--
+THESIS: A pricing workbench as a monochrome control console; the margin verdict, not the
+price, is the loudest element. Refuses the pastel SaaS-calculator card collage.
+OWN-WORLD: Graphite Console. Surface ladder #0f0f0f->#3a3a3a, ink #f2f2f2/#b3b3b3/#8a8a8a/
+#5f5f5f, 8% hairlines, white<->near-black inverse pair as the only accent. Geist, tabular
+numerals, 48px control rows, segmented pickers, tracked-caps section labels, Phosphor icons,
+120/180ms ease.
+STORY: A consultant at a desk composes a defensible price, reads one verdict, copies text
+into a proposal.
+FIRST VIEWPORT: Hairline header; left, segmented Mode/Currency/Start-from over hour rows;
+right, the Breakdown panel led by the verdict row, arithmetic beneath, display-scale total,
+two copy actions.
+FORM: User-pinned world (Graphite Console study, captured from localhost:8942); a pinned
+brief beats the roll - no seed.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review,
+the verdict, and DESIGN.md
+-->
+
+<!-- Phosphor icons (MIT), 256 grid, fill weight where mass helps (verdicts, back caret,
+     trash, sliders), regular weight for bare marks (x, plus, check) so they read as glyphs,
+     not chips. All inlined: the FX call stays the app's only network request. -->
 <svg hidden aria-hidden="true">
-  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16"/><circle cx="15" cy="9" r="2.5" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="2.5" fill="currentColor" stroke="none"/></symbol>
-  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14 6l-6 6 6 6"/></symbol>
-  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
-  <symbol id="i-v-good" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/></symbol>
-  <!-- 16 wide, same as the circles' diameter: at equal width a triangle reads as the larger shape -->
-  <symbol id="i-v-warn" viewBox="0 0 24 24"><path d="M12 5.5L20 19.5H4zM12 10.6v3.8M12 17h.01"/></symbol>
-  <symbol id="i-v-bad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 256 256"><path d="M32,80a8,8,0,0,1,8-8H77.17a28,28,0,0,1,53.66,0H216a8,8,0,0,1,0,16H130.83a28,28,0,0,1-53.66,0H40A8,8,0,0,1,32,80Zm184,88H194.83a28,28,0,0,0-53.66,0H40a8,8,0,0,0,0,16H141.17a28,28,0,0,0,53.66,0H216a8,8,0,0,0,0-16Z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 256 256"><path d="M168,48V208a8,8,0,0,1-13.66,5.66l-80-80a8,8,0,0,1,0-11.32l80-80A8,8,0,0,1,168,48Z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z"/></symbol>
+  <symbol id="i-v-good" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="i-v-warn" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/></symbol>
+  <symbol id="i-v-bad" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,130.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
 </svg>
 
 <main>
@@ -303,59 +338,32 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   <button id="viewToggle"></button>
 </header>
 
-<!-- ───────────────── first run ───────────────── -->
-<section id="firstRun" class="steps" hidden>
-  <h2 id="stepLabel">Setup</h2>
-  <fieldset class="step" data-step="1">
-    <legend>1. What do you sell, and at what rate per hour?</legend>
-    <div id="setupRates"></div>
-  </fieldset>
-  <fieldset class="step" data-step="2" hidden>
-    <legend>2. Fixed costs on top of hours.</legend>
-    <div class="row">
-      <div><label for="s_startupFee">Startup fee</label><input type="number" id="s_startupFee" data-k="settings.startupFee" step="100" min="0"></div>
-      <div><label for="s_adminPercent">Admin %</label><input type="number" id="s_adminPercent" data-k="settings.adminPercent" step="1" min="0" max="100"></div>
-    </div>
-    <p class="hint">Admin covers the unbilled hours around the billed ones. Startup fee is the one-time cost of getting an engagement running.</p>
-  </fieldset>
-  <fieldset class="step" data-step="3" hidden>
-    <legend>3. What does an hour cost you?</legend>
-    <div class="row">
-      <div><label for="s_internalCostPerHour">Internal cost / h</label><input type="number" id="s_internalCostPerHour" data-k="settings.internalCostPerHour" step="50" min="0"></div>
-      <div><label for="s_targetMarginPercent">Target margin %</label><input type="number" id="s_targetMarginPercent" data-k="settings.targetMarginPercent" step="1" min="0" max="99"></div>
-    </div>
-    <p class="hint">This powers the margin check: the number that tells you whether a quote is actually worth taking. Without it there is no floor.</p>
-  </fieldset>
-  <div class="bar" style="margin:16px 0 0">
-    <button class="primary" id="stepNext">Next</button>
-    <button id="stepBack" hidden>Back</button>
-    <button id="stepSkip">Skip</button>
-  </div>
-</section>
-
 <!-- ───────────────── quote view ───────────────── -->
 <div id="quoteView" class="cols">
 <section>
   <h2>Quote</h2>
-  <div class="row">
-    <!-- three collapsed pickers instead of three tracks. min-width so a narrow screen wraps
-         the row instead of squeezing "Retainer" down to "Reta…" — .row>div sets min-width:0,
-         which otherwise lets a select shrink below its own longest option. -->
-    <div style="flex:1 1 110px;min-width:104px"><label for="qMode">Mode</label>
-      <select id="qMode" data-k="quote.mode">
-        <option value="hourly">Hourly</option>
-        <option value="project">Project</option>
-        <option value="retainer">Retainer</option>
-      </select></div>
-    <div style="flex:0 1 84px;min-width:68px"><label for="qCur">Currency</label>
-      <select id="qCur" data-k="quote.currency">
-        <option>SEK</option><option>EUR</option><option>USD</option><option>GBP</option>
-      </select></div>
-    <div style="flex:1 1 130px;min-width:104px"><label for="qDir">Start from</label>
-      <select id="qDir" data-k="quote.direction">
-        <option value="forward">Hours → price</option>
-        <option value="budget">Budget → hours</option>
-      </select></div>
+  <div class="pickers">
+    <!-- one option grammar everywhere: the segmented control. State is one ladder step up. -->
+    <div class="fld"><span class="flabel" id="lbMode">Mode</span>
+      <div class="seg" role="group" aria-labelledby="lbMode" data-seg="quote.mode">
+        <button type="button" data-v="hourly">Hourly</button>
+        <button type="button" data-v="project">Project</button>
+        <button type="button" data-v="retainer">Retainer</button>
+      </div></div>
+    <div class="pickrow">
+      <div class="fld"><span class="flabel" id="lbCur">Currency</span>
+        <div class="seg" role="group" aria-labelledby="lbCur" data-seg="quote.currency">
+          <button type="button" data-v="SEK">SEK</button>
+          <button type="button" data-v="EUR">EUR</button>
+          <button type="button" data-v="USD">USD</button>
+          <button type="button" data-v="GBP">GBP</button>
+        </div></div>
+      <div class="fld"><span class="flabel" id="lbDir">Start from</span>
+        <div class="seg" role="group" aria-labelledby="lbDir" data-seg="quote.direction">
+          <button type="button" data-v="forward">Hours</button>
+          <button type="button" data-v="budget">Budget</button>
+        </div></div>
+    </div>
   </div>
 
   <h3>Hours <span class="eff only-retainer">per month</span></h3>
@@ -363,26 +371,20 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   <p class="hint" id="linesNote"></p>
   <div class="bar">
     <select id="addFromCard" aria-label="Add a rate from the rate card"></select>
-    <button id="addCustom"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span>One-off line</span></button>
+    <button id="addCustom" class="dashed"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span>One-off line</span></button>
   </div>
 
-  <div class="row only-project">
-    <div style="flex:0 0 110px"><label for="riskBufferPercent">Risk buffer %</label>
-      <input type="number" id="riskBufferPercent" data-k="quote.riskBufferPercent" step="1" min="0" max="200"></div>
-    <div class="eff" id="effRisk"></div>
-  </div>
-  <div class="row only-retainer">
-    <div style="flex:0 0 90px"><label for="retainerMonths">Months</label>
-      <input type="number" id="retainerMonths" data-k="quote.retainerMonths" step="1" min="1"></div>
-    <div style="flex:0 0 130px"><label for="retainerDiscountPercent">Retainer discount %</label>
-      <input type="number" id="retainerDiscountPercent" data-k="quote.retainerDiscountPercent" step="1" min="0" max="100"></div>
-    <div class="eff" id="effRetainer"></div>
-  </div>
-  <div class="row">
-    <div style="flex:0 0 110px"><label for="discountPercent">Discount %</label>
-      <input type="number" id="discountPercent" data-k="quote.discountPercent" step="1" min="0" max="100"></div>
-    <div class="eff" id="effDiscount"></div>
-  </div>
+  <div class="crow only-project"><label for="riskBufferPercent">Risk buffer %</label>
+    <span class="eff" id="effRisk"></span>
+    <input type="number" id="riskBufferPercent" data-k="quote.riskBufferPercent" step="1" min="0" max="200"></div>
+  <div class="crow only-retainer"><label for="retainerMonths">Months</label>
+    <input type="number" id="retainerMonths" data-k="quote.retainerMonths" step="1" min="1"></div>
+  <div class="crow only-retainer"><label for="retainerDiscountPercent">Retainer discount %</label>
+    <span class="eff" id="effRetainer"></span>
+    <input type="number" id="retainerDiscountPercent" data-k="quote.retainerDiscountPercent" step="1" min="0" max="100"></div>
+  <div class="crow"><label for="discountPercent">Discount %</label>
+    <span class="eff" id="effDiscount"></span>
+    <input type="number" id="discountPercent" data-k="quote.discountPercent" step="1" min="0" max="100"></div>
 
   <label class="check"><input type="checkbox" id="includeStartupFee" data-k="quote.includeStartupFee">
     Startup fee <span class="eff" id="effStartup"></span></label>
@@ -394,13 +396,13 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 
   <div class="only-budget">
     <h3>From budget</h3>
-    <div class="row">
-      <div style="flex:0 0 130px"><label for="budgetTarget">Client budget</label>
-        <input type="number" id="budgetTarget" data-k="quote.budgetTarget" step="1000" min="0"></div>
-      <div style="flex:0 0 110px"><label for="budgetIncVat">Stated</label>
-        <select id="budgetIncVat" data-k="quote.budgetIncVat">
-          <option value="ex">ex moms</option><option value="inc">ink moms</option></select></div>
-    </div>
+    <div class="crow"><label for="budgetTarget">Client budget</label>
+      <input type="number" id="budgetTarget" data-k="quote.budgetTarget" step="1000" min="0"></div>
+    <div class="fld"><span class="flabel" id="lbStated">Stated</span>
+      <div class="seg" role="group" aria-labelledby="lbStated" data-seg="quote.budgetIncVat">
+        <button type="button" data-v="ex">ex moms</button>
+        <button type="button" data-v="inc">ink moms</button>
+      </div></div>
     <p class="hint" id="budgetOut"></p>
   </div>
 
@@ -419,11 +421,11 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   <div id="verdict"></div>
   <table id="quote"></table>
   <div id="announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-  <div class="bar" style="margin:16px 0 0">
+  <div class="copyrow">
     <button class="primary" id="copyClient">Copy for client</button>
     <button id="copyInternal">Copy internal</button>
   </div>
-  <h2 style="margin:26px 0 12px">Margin</h2>
+  <h3 style="margin-top:26px">Margin</h3>
   <div id="margin" role="status"></div>
 </section>
 </div>
@@ -433,15 +435,13 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 <section>
   <h3>Rate card</h3>
   <div id="rates"></div>
-  <button id="addRate"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span>Add rate</span></button>
+  <button id="addRate" class="dashed"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg><span>Add rate</span></button>
 
   <h3>Fees &amp; defaults</h3>
-  <div class="row">
-    <div><label for="startupFee">Startup fee (SEK)</label><input type="number" id="startupFee" data-k="settings.startupFee" step="100" min="0"></div>
-    <div><label for="adminPercent">Admin %</label><input type="number" id="adminPercent" data-k="settings.adminPercent" step="1" min="0" max="100"></div>
-    <div><label for="defaultRiskBufferPercent">Default risk %</label><input type="number" id="defaultRiskBufferPercent" data-k="settings.defaultRiskBufferPercent" step="1" min="0" max="200"></div>
-    <div><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1" min="0" max="100"></div>
-  </div>
+  <div class="crow"><label for="startupFee">Startup fee (SEK)</label><input type="number" id="startupFee" data-k="settings.startupFee" step="100" min="0"></div>
+  <div class="crow"><label for="adminPercent">Admin %</label><input type="number" id="adminPercent" data-k="settings.adminPercent" step="1" min="0" max="100"></div>
+  <div class="crow"><label for="defaultRiskBufferPercent">Default risk %</label><input type="number" id="defaultRiskBufferPercent" data-k="settings.defaultRiskBufferPercent" step="1" min="0" max="200"></div>
+  <div class="crow"><label for="vatPercent">Moms %</label><input type="number" id="vatPercent" data-k="settings.vatPercent" step="1" min="0" max="100"></div>
   <p class="hint">Moms is the rate used whenever a quote has moms switched on: 25 % standard, 12 or 6 for reduced.</p>
 
   <h3>Presets</h3>
@@ -455,19 +455,15 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 
 <section>
   <h3>Exchange rates</h3>
-  <div class="row">
-    <div><label for="fxEUR">1 EUR = SEK</label><input type="number" id="fxEUR" data-k="settings.fx.EUR" step="0.0001" min="0.0001"></div>
-    <div><label for="fxUSD">1 USD = SEK</label><input type="number" id="fxUSD" data-k="settings.fx.USD" step="0.0001" min="0.0001"></div>
-    <div><label for="fxGBP">1 GBP = SEK</label><input type="number" id="fxGBP" data-k="settings.fx.GBP" step="0.0001" min="0.0001"></div>
-  </div>
+  <div class="crow"><label for="fxEUR">1 EUR = SEK</label><input type="number" id="fxEUR" data-k="settings.fx.EUR" step="0.0001" min="0.0001"></div>
+  <div class="crow"><label for="fxUSD">1 USD = SEK</label><input type="number" id="fxUSD" data-k="settings.fx.USD" step="0.0001" min="0.0001"></div>
+  <div class="crow"><label for="fxGBP">1 GBP = SEK</label><input type="number" id="fxGBP" data-k="settings.fx.GBP" step="0.0001" min="0.0001"></div>
   <label class="check"><input type="checkbox" id="fxManualOverride" data-k="settings.fxManualOverride"> Manual override</label>
   <p class="hint" id="fxNote">Fetching rates…</p>
 
   <h3>Margin floor</h3>
-  <div class="row">
-    <div><label for="internalCostPerHour">Internal cost / h (SEK)</label><input type="number" id="internalCostPerHour" data-k="settings.internalCostPerHour" step="50" min="0"></div>
-    <div><label for="targetMarginPercent">Target margin %</label><input type="number" id="targetMarginPercent" data-k="settings.targetMarginPercent" step="1" min="0" max="99"></div>
-  </div>
+  <div class="crow"><label for="internalCostPerHour">Internal cost / h (SEK)</label><input type="number" id="internalCostPerHour" data-k="settings.internalCostPerHour" step="50" min="0"></div>
+  <div class="crow"><label for="targetMarginPercent">Target margin %</label><input type="number" id="targetMarginPercent" data-k="settings.targetMarginPercent" step="1" min="0" max="99"></div>
 
   <h3>Backup</h3>
   <div class="bar">
@@ -476,7 +472,6 @@ body:not(.cur-SEK) p.only-foreign{display:block}
     <input type="file" id="impFile" accept="application/json" hidden>
   </div>
   <p class="hint">Export contains settings, presets and every saved quote. Import asks before replacing.</p>
-  <p class="hint"><button id="rerunSetup">Re-run first-time setup</button></p>
 </section>
 </div>
 
@@ -794,9 +789,9 @@ function renderLines() {
     if (idle(l) && !r.orphan && !r.custom) { hidden++; return ""; }
     const rm = `<button class="del" data-lrm="${i}" aria-label="Remove ${esc(r.label)} from this quote">${ico("close")}</button>`;
     if (r.custom) return `<div>
-      <input class="lbl" data-l="${i}" data-lf="label" aria-label="Line label" value="${esc(r.label)}">
+      <input class="lbl" data-l="${i}" data-lf="label" aria-label="Line label" placeholder="Label" value="${esc(l.label || "")}">
       <input class="rt" type="number" data-l="${i}" data-lf="hourly" step="50" min="0"
-        aria-label="Rate per hour" value="${r.hourly}">
+        aria-label="Rate per hour" placeholder="Rate" value="${r.hourly}">
       <input type="number" id="hr${i}" data-h="${i}" step="1" min="0" aria-label="Hours" value="${l.hours || 0}">${rm}</div>`;
     return `<div><label for="hr${i}">${esc(r.label)}
       <span${r.orphan ? ' class="bad"' : ""}>× ${fmt(conv(r.hourly || 0, r.currency, q.currency, s.fx), q.currency)}</span></label>
@@ -816,16 +811,16 @@ function renderLines() {
 }
 
 function renderRates() {
-  const html = S().rates.map((r, i) => `
-    <div class="row" data-r="${i}">
-      <div style="flex:2 1 110px"><label>Label</label><input data-f="label" aria-label="Rate label" value="${esc(r.label)}"></div>
-      <div style="flex:1 1 80px"><label>Rate/h</label><input type="number" data-f="hourly" aria-label="${esc(r.label)} rate per hour" step="50" value="${r.hourly}"></div>
-      <div style="flex:0 1 84px"><label>Cur</label><select data-f="currency" aria-label="${esc(r.label)} currency">
-        ${CURS.map(c => `<option${r.currency === c ? " selected" : ""}>${c}</option>`).join("")}</select></div>
-      <button class="del" data-f="del" aria-label="Delete ${esc(r.label)} from the rate card">${ico("close")}</button>
+  const html = `<div class="cols-head" aria-hidden="true"><span>Role</span><span>Rate/h</span><span>Cur</span><span></span></div>`
+    + S().rates.map((r, i) => `
+    <div class="rrow" data-r="${i}">
+      <input data-f="label" aria-label="Rate label" placeholder="Role" value="${esc(r.label)}">
+      <input type="number" data-f="hourly" aria-label="${esc(r.label)} rate per hour" step="50" value="${r.hourly}">
+      <select data-f="currency" aria-label="${esc(r.label)} currency">
+        ${CURS.map(c => `<option${r.currency === c ? " selected" : ""}>${c}</option>`).join("")}</select>
+      <button class="del" data-f="del" aria-label="Delete ${esc(r.label)} from the rate card">${ico("trash")}</button>
     </div>`).join("");
   $("rates").innerHTML = html;
-  $("setupRates").innerHTML = html;
 }
 
 function renderInputs() {
@@ -847,6 +842,7 @@ function renderFooter() {
 function render() {
   const { s, q, c, fit } = active();
   document.body.className = `mode-${q.mode} dir-${q.direction} cur-${q.currency}`;
+  renderSegs();
   const named = !!q.name;
   $("quoteLabel").textContent = named ? q.name : "Unsaved quote";
   $("quoteLabel").className = named ? "" : "draft";
@@ -901,6 +897,10 @@ function render() {
     $("verdict").innerHTML = "";
     $("margin").innerHTML = `<p class="hint">Set your internal cost per hour in
       <a href="#" id="toSettings">Settings</a> to see margin and break-even.</p>`;
+  } else if (!c.hours) {
+    // an empty quote has earned no verdict — the inverse alarm is for real quotes gone wrong
+    $("verdict").innerHTML = `<p class="hint" style="margin:0 0 14px">Add hours to see the margin verdict.</p>`;
+    $("margin").innerHTML = `<p class="hint">Margin and break-even appear once the quote has hours.</p>`;
   } else {
     const dead = c.totalExVat <= 0, cls = verdictClass(s, c);
     const verdict = dead ? "No revenue: this quote costs you money"
@@ -910,7 +910,7 @@ function render() {
       cls === "good" ? "" : culprit(s, q, c)}</span></p>`;
     let m = `<table>` +
       tr("Revenue ex moms", c.totalExVat) + tr("Internal cost", c.internalCost) + tr("Profit", c.profit, "rule") +
-      tr(`Target ${s.targetMarginPercent} % needs ≥ per hour`, c.minViableRate, "muted");
+      tr(`Target ${s.targetMarginPercent} % needs`, `≥ ${fmt(c.minViableRate, c.currency)}/h`, "muted");
     if (q.mode !== "retainer" && c.breakEvenHours !== null)
       m += `<tr class="muted"><td>Break-even headroom</td><td>${c.hours ? hrs(Math.max(0, c.breakEvenHours - c.hours)) + ` beyond ${hrs(c.hours)}` : hrs(c.breakEvenHours)}</td></tr>`;
     $("margin").innerHTML = m + "</table>";
@@ -937,6 +937,7 @@ function queueAnnouncement(s, c) {
   clearTimeout(announceTimer);
   announceTimer = setTimeout(() => {
     if (!c.costSet) $("announce").textContent = `${fmt(c.totalExVat, c.currency)} ex moms. Set internal cost per hour to see the verdict.`;
+    else if (!c.hours) $("announce").textContent = `${fmt(c.totalExVat, c.currency)} ex moms. Add hours to see the margin verdict.`;
     else {
       const cls = verdictClass(s, c);
       const verdict = c.totalExVat <= 0 ? "bad: no revenue"
@@ -1036,20 +1037,35 @@ document.addEventListener("input", e => {
   } else if (row && el.dataset.f) {                      // rate card editor
     const r = S().rates[+row.dataset.r];
     r[el.dataset.f] = el.type === "number" ? num(el.value) : el.value;
-    renderRates0(el, row);
     renderLines();
   } else if (el.dataset.k) {
-    const wasCur = Q().currency;
-    setPath(el.dataset.k, el.type === "checkbox" ? el.checked
+    applyK(el.dataset.k, el.type === "checkbox" ? el.checked
       : el.type === "number" ? (el.value === "" ? null : num(el.value)) : el.value);
-    if (el.dataset.k === "quote.currency" && Q().currency !== wasCur) {
-      Q().vatEnabled = Q().currency === "SEK";            // §7: USD quotes default to no Swedish VAT
-      renderInputs(); renderLines();
-    }
-    if (el.dataset.k.startsWith("settings.fx")) { renderLines(); fxNote(S().fxRateDate, true); }
+    return;
   } else return;
   save(); render();
 });
+
+/** One pipeline for every keyed setting, whether it arrives from an input or a segment. */
+function applyK(key, v) {
+  const wasCur = Q().currency;
+  setPath(key, v);
+  if (key === "quote.currency" && Q().currency !== wasCur) {
+    Q().vatEnabled = Q().currency === "SEK";            // §7: USD quotes default to no Swedish VAT
+    renderInputs(); renderLines();
+  }
+  if (key.startsWith("settings.fx")) { renderLines(); fxNote(S().fxRateDate, true); }
+  save(); render();
+}
+
+/** Segments read state, buttons write it back through applyK — aria-pressed is set in render. */
+function renderSegs() {
+  for (const seg of document.querySelectorAll("[data-seg]")) {
+    const v = String(seg.dataset.seg.split(".").reduce((o, k) => o[k], db));
+    for (const b of seg.querySelectorAll("button"))
+      b.setAttribute("aria-pressed", String(b.dataset.v === v));
+  }
+}
 
 /* Bounds live on the elements as min/max and are enforced on commit, not mid-keystroke — clamping
    while someone types 100 would fight them at "1". The verdict guards itself regardless. */
@@ -1063,15 +1079,10 @@ document.addEventListener("change", e => {
   el.dispatchEvent(new Event("input", { bubbles: true }));   // one pipeline: let the input handler store it
 });
 
-/** Keep the twin rate-card editors (settings + first-run) in sync without stealing focus. */
-function renderRates0(el, row) {
-  const other = (el.closest("#rates") ? $("setupRates") : $("rates"));
-  const twin = other.querySelector(`[data-r="${row.dataset.r}"] [data-f="${el.dataset.f}"]`);
-  if (twin) twin.value = el.value;
-}
-
 document.addEventListener("click", async e => {
   if (e.target.id === "toSettings" || e.target.dataset.view === "settings") { e.preventDefault(); showView("settings"); return; }
+  const sb = e.target.closest("[data-seg] button");
+  if (sb) { applyK(sb.closest("[data-seg]").dataset.seg, sb.dataset.v); return; }
   if (e.target.dataset.lrm) {                            // drop a line from this quote only
     Q().lines.splice(+e.target.dataset.lrm, 1);
     save(); renderLines(); render();
@@ -1123,31 +1134,13 @@ $("copyInternal").onclick = e => { if (!e.currentTarget.disabled) copy(e.current
 
 /* views */
 function showView(v) {
-  const setup = v === "setup";
-  $("firstRun").hidden = !setup;
-  $("quoteView").hidden = setup || v === "settings";
-  $("settingsView").hidden = setup || v === "quote";
-  $("viewToggle").hidden = setup;
-  $("quoteLabel").hidden = setup;                      // nothing is being quoted yet
+  $("quoteView").hidden = v === "settings";
+  $("settingsView").hidden = v === "quote";
   // the visible label IS the accessible name — a static aria-label would contradict it on the way back
   $("viewToggle").innerHTML = v === "settings"
     ? `${ico("back")}<span>Quote</span>` : `${ico("sliders")}<span>Settings</span>`;
 }
 $("viewToggle").onclick = () => showView($("settingsView").hidden ? "settings" : "quote");
-
-/* first-run: three steps, skippable, never shown again once settings exist */
-let step = 1;
-function renderStep() {
-  for (const f of document.querySelectorAll(".step")) f.hidden = +f.dataset.step !== step;
-  $("stepLabel").textContent = `Setup — step ${step} of 3`;
-  $("stepBack").hidden = step === 1;
-  $("stepNext").textContent = step === 3 ? "Done" : "Next";
-}
-$("stepNext").onclick = () => { if (step === 3) finishSetup(); else { step++; renderStep(); } };
-$("stepBack").onclick = () => { step--; renderStep(); };
-$("stepSkip").onclick = () => finishSetup();
-function finishSetup() { save(); renderLines(); renderInputs(); render(); showView("quote"); }
-$("rerunSetup").onclick = () => { step = 1; renderStep(); showView("setup"); };
 
 /* saved quotes */
 function renderSaved() {
@@ -1411,8 +1404,7 @@ function selfCheck() {
 /* ══════════ boot ══════════ */
 
 renderPresets(); renderSaved(); renderRates(); renderLines(); renderInputs(); render(); renderFooter();
-showView(S().lastSavedAt ? "quote" : "setup");
-if (!S().lastSavedAt) renderStep();
+showView("quote");
 loadFx();
 if (location.search.includes("test")) {
   const el = $("testout");
