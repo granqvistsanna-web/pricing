@@ -73,7 +73,7 @@ input:not([type=checkbox]):not([type=file]){font-weight:500}
 input::placeholder{color:var(--ink-4);font-weight:400}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
-input:not([type=checkbox]):not([type=file]):focus,select:focus{background-color:var(--elev);box-shadow:var(--ring)}
+input:not([type=checkbox]):not([type=file]):focus,select:focus{background-color:var(--thumb);box-shadow:var(--ring)}
 /* Lucide chevron-down; a mid grey that reads on both themes (data URIs can't take currentColor) */
 select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -104,7 +104,7 @@ button .ic{width:var(--icon-sm);height:var(--icon-sm)}
 .seg button{flex:1;min-height:0;height:var(--h-nav);padding:0 var(--s-4);border:0;border-radius:var(--r-pill);
   background:transparent;color:var(--ink-4);font-size:13px;font-weight:500;white-space:nowrap}
 .seg button:active:not(:disabled){scale:var(--press-chip)}
-.seg button[aria-pressed="true"]{background:var(--elev);color:var(--ink);box-shadow:var(--shadow-1)}
+.seg button[aria-pressed="true"]{background:var(--thumb);color:var(--ink);box-shadow:var(--shadow-1)}
 .seg button:focus-visible{outline-offset:-2px}
 .fld{margin-bottom:var(--s-6)}
 .pickers{margin-bottom:var(--s-4)}
@@ -131,7 +131,7 @@ legend{padding:0;margin-bottom:5px;font-size:13px;color:var(--ink-4)}
 .check+.check{border-top:1px solid var(--hairline)}
 .check input{order:2;margin-left:auto;appearance:none;-webkit-appearance:none;flex:none;
   width:50px;height:var(--h-switch);min-height:0;padding:0;border-radius:var(--r-pill);cursor:pointer;
-  --knob:var(--elev);
+  --knob:var(--thumb);
   background:rgba(var(--ink-rgb),.16) radial-gradient(circle,var(--knob) 11.5px,transparent 12px) no-repeat 0 0/30px 30px;
   transition:background-color 200ms,background-position var(--t-open) var(--morph-ease)}
 .check input:checked{--knob:var(--on-ink);background-color:var(--ink);background-position:20px 0}
@@ -152,7 +152,7 @@ legend{padding:0;margin-bottom:5px;font-size:13px;color:var(--ink-4)}
 .lines .rt{width:92px}
 /* a one-off line is three editable cells — lift them onto the elevated sheet so their bounds read */
 .lines div:has(.lbl){padding-left:var(--s-2)}
-.lines div:has(.lbl) input{background:var(--elev)}
+.lines div:has(.lbl) input{background:var(--thumb)}
 
 .rrow,.cols-head{display:grid;grid-template-columns:minmax(0,1fr) 104px 84px 40px;
   gap:var(--s-4);align-items:center}
