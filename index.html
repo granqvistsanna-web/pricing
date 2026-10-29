@@ -3,222 +3,226 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Rate &amp; Pricing Calculator</title>
-<meta name="theme-color" content="#0f0f0f">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f0f0f'/%3E%3Crect x='14' y='14' width='36' height='36' rx='8' fill='%23ffffff'/%3E%3C/svg%3E">
-<link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2317181a'/%3E%3Crect x='14' y='14' width='36' height='36' rx='8' fill='%23ffffff'/%3E%3C/svg%3E">
+<script>
+  // stamp a stored theme before first paint; with none, the tokens follow the system
+  try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap">
+<link rel="stylesheet" href="https://granqvistsanna-web.github.io/pumice/tokens.css">
 <style>
-/* ══════════ Graphite Console tokens ══════════ */
-@font-face{font-family:"Geist";src:url("fonts/Geist-Variable.woff2") format("woff2");
-  font-weight:100 900;font-display:swap}
-:root{
-  color-scheme:dark;
-  /* surface ladder — elevation is lightness, not shadow */
-  --bg-0:#0f0f0f; --bg-1:#171717; --bg-2:#222222; --bg-3:#2e2e2e; --bg-4:#3a3a3a;
-  /* ink ladder */
-  --ink-hi:#f2f2f2; --ink-mid:#b3b3b3; --ink-low:#8a8a8a; --ink-faint:#5f5f5f;
-  --hairline:rgba(255,255,255,.08);
-  /* inverse pair — the only accent */
-  --inverse-bg:#ffffff; --inverse-ink:#101010;
-  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px;
-  --row-h:48px; --pad-control:16px; --pad-panel:20px; --gap-row:10px;
-  --ease:cubic-bezier(.25,.1,.25,1); --t-fast:120ms; --t-med:180ms;
-}
+/* ══════════ Pumice — page rules on top of tokens.css (no page-level token overrides) ══════════ */
 
 /* ══════════ base ══════════ */
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg-0);color:var(--ink-mid);
-  font:15px/1.5 "Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
-main{max-width:1060px;margin:0 auto;padding:0 24px 56px}
+html{-webkit-text-size-adjust:100%;color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink-2);
+  font:400 15px/1.5 var(--font-ui);font-feature-settings:"cv11","ss01";
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  transition:background-color var(--t-fade),color var(--t-color)}
+main{max-width:1060px;margin:0 auto;padding:0 var(--s-9) var(--s-12)}
 
-header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;
-  margin:0 -24px 24px;padding:13px 24px;background:var(--bg-0);
-  border-bottom:1px solid var(--hairline)}
+/* sticky frosted bar */
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s-7);
+  margin:0 calc(-1 * var(--s-9)) var(--s-9);padding:var(--s-5) var(--s-9);min-height:var(--h-bar);
+  background:var(--frost);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);
+  /* full-bleed fill past main's max-width without changing the markup */
+  box-shadow:0 0 0 100vmax var(--frost);clip-path:inset(0 -100vmax)}
 .brand{flex:1;min-width:0}
-h1{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em;line-height:1.25;color:var(--ink-hi)}
-#quoteLabel{margin:2px 0 0;font-size:12.5px;font-weight:500;line-height:1.35;
-  color:var(--ink-low);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* state via wording ("Unsaved quote"), not an ink drop below the contrast floor */
-#quoteLabel.draft{color:var(--ink-low)}
+h1{margin:0;font-size:15px;font-weight:500;line-height:1.4;color:var(--ink)}
+#quoteLabel{margin:0;font-size:13px;line-height:1.5;color:var(--ink-4);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* state via wording ("Unsaved quote"), not a dimmer grey */
+#quoteLabel.draft{color:var(--ink-4)}
 
-.cols{display:grid;gap:20px;grid-template-columns:1fr}
+.cols{display:grid;gap:var(--panel-gap);grid-template-columns:1fr}
 @media (min-width:860px){
   .cols{grid-template-columns:minmax(0,1fr) minmax(0,.94fr);align-items:start}
-  @media (min-height:780px){#quoteView>section:last-child{position:sticky;top:84px}}
+  @media (min-height:780px){#quoteView>section:last-child{position:sticky;top:calc(var(--h-bar) + var(--s-7))}}
 }
-section{background:var(--bg-1);border-radius:var(--r-xl);padding:var(--pad-panel);min-width:0}
+section{background:var(--surface);border-radius:var(--r-card);padding:var(--s-9);min-width:0}
 
-@keyframes viewin{from{opacity:0;transform:translateX(var(--from,0))}}
-#quoteView,#settingsView{animation:viewin var(--t-med) var(--ease)}
+@keyframes viewin{from{opacity:0;translate:var(--from,0) 0}}
+#quoteView,#settingsView{animation:viewin var(--t-move) var(--rise)}
 #settingsView{--from:14px}
 #quoteView{--from:-14px}
 
-/* ══════════ type ══════════ */
-h2{margin:0 0 18px;font-size:19px;font-weight:650;letter-spacing:-.005em;color:var(--ink-hi)}
-h3{margin:28px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--hairline);
-  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-low)}
+/* ══════════ type — Inter 400/500 only ══════════ */
+h2{margin:0 0 var(--s-8);font-size:26px;line-height:1.2;font-weight:500;letter-spacing:-.01em;color:var(--ink)}
+h3{margin:var(--s-10) 0 var(--s-6);font-size:13px;line-height:1.5;font-weight:500;color:var(--ink)}
 section>h3:first-child{margin-top:0}
-h3 .eff{text-transform:none;letter-spacing:.01em;font-weight:500;font-size:12px;color:var(--ink-low)}
-label{display:block;font-size:15px;color:var(--ink-mid)}
-a{color:var(--ink-hi);font-weight:500;text-decoration:underline;
-  text-decoration-color:var(--ink-faint);text-underline-offset:3px}
-.hint{margin:10px 0 12px;font-size:13px;line-height:1.55;color:var(--ink-low)}
-.eff{color:var(--ink-low);font-size:13px;white-space:nowrap}
-.flabel{display:block;margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--ink-low)}
+h3 .eff{font-weight:400}
+label{display:block;font-size:15px;color:var(--ink-2)}
+a{color:var(--ink);font-weight:500;text-decoration:underline;
+  text-decoration-color:var(--rule);text-underline-offset:3px}
+.hint{margin:var(--s-5) 0 var(--s-6);font-size:13px;line-height:1.5;color:var(--ink-4)}
+.eff{color:var(--ink-4);font-size:13px;white-space:nowrap}
+.flabel{display:block;margin:0 0 var(--s-4);font-size:12px;line-height:1.6;font-weight:500;color:var(--ink-3)}
 
-/* ══════════ controls ══════════ */
-input,select,button{font:inherit;font-size:15px;color:var(--ink-hi);border:0;
-  border-radius:var(--r-md);padding:0 var(--pad-control);min-height:var(--row-h);
-  background:var(--bg-2);
-  transition:background var(--t-fast) var(--ease),color var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease),opacity var(--t-fast) var(--ease)}
+/* ══════════ controls — pills on washes ══════════ */
+input,select,button{font:inherit;font-size:15px;color:var(--ink);border:0;
+  border-radius:var(--r-pill);padding:0 var(--s-7);min-height:var(--h-button);
+  background:var(--wash);
+  transition:background var(--t-color),color var(--t-color),box-shadow var(--t-color),
+    opacity var(--t-fade),scale var(--t-press) var(--spring-soft)}
 input:not([type=checkbox]):not([type=file]){font-weight:500}
-input::placeholder{color:var(--ink-low);font-weight:400}
+input::placeholder{color:var(--ink-4);font-weight:400}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
-input:not([type=checkbox]):not([type=file]):focus,select:focus{background-color:var(--bg-3)}
+input:not([type=checkbox]):not([type=file]):focus,select:focus{background-color:var(--elev);box-shadow:var(--ring)}
+/* Lucide chevron-down; a mid grey that reads on both themes (data URIs can't take currentColor) */
 select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%238a8a8a'%3E%3Cpath d='M213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80A8 8 0 0 1 48 88h160a8 8 0 0 1 5.66 13.66Z'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 14px center;background-size:11px}
-select:disabled{opacity:.45;cursor:default}
-:focus-visible{outline:2px solid var(--ink-low);outline-offset:2px}
-button{cursor:pointer;font-size:15px;font-weight:500;padding:0 18px;color:var(--ink-mid);
-  display:inline-flex;align-items:center;justify-content:center;gap:8px}
-button.primary,button.bad{background:var(--inverse-bg);color:var(--inverse-ink);font-weight:600}
-button.dashed{width:100%;background:transparent;color:var(--ink-low);
-  border:1px dashed rgba(255,255,255,.22)}
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888780' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:15px}
+select:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* buttons: quiet pill by default, ink pill for the primary, 1px outline for add-affordances */
+button{cursor:pointer;font-size:15px;font-weight:500;line-height:1;padding:0 20px;color:var(--ink);
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--s-4)}
+button:active:not(:disabled){scale:var(--press)}
+button.primary,button.bad{background:var(--ink);color:var(--on-ink)}
+button.dashed{width:100%;background:transparent;color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line-ctl)}
 .bar button.dashed{width:auto;flex:1 1 150px}
-button.text{background:transparent;color:var(--ink-low);padding:0 10px}
-button:disabled{opacity:.4;cursor:not-allowed}
-button:active:not(:disabled){filter:brightness(.86)}
+button.text{background:transparent;color:var(--ink-4);padding:0 var(--s-5)}
+button:disabled{opacity:.4;cursor:not-allowed;scale:1}
 button,label{-webkit-tap-highlight-color:transparent}
 button{-webkit-user-select:none;user-select:none}
-/* one icon family: Phosphor, filled where weight helps, 256 grid.
+/* one icon family: Lucide geometry on a 24 grid, 2px round stroke.
    pointer-events:none is load-bearing: the delegated click handler reads e.target.dataset,
    and without it a click on the glyph targets the <svg>/<use> instead of the button. */
-.ic{width:16px;height:16px;flex:0 0 auto;display:block;pointer-events:none;fill:currentColor}
+.ic{width:var(--icon);height:var(--icon);flex:none;display:block;pointer-events:none;
+  fill:none;stroke:currentColor;stroke-width:var(--icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+button .ic{width:var(--icon-sm);height:var(--icon-sm)}
 
-/* ══════════ segmented control — the system's one option picker ══════════ */
-.seg{display:flex;background:var(--bg-2);border-radius:var(--r-md);padding:3px;height:var(--row-h)}
-.seg button{flex:1;min-height:0;height:100%;border:0;background:transparent;border-radius:9px;
-  color:var(--ink-low);font-size:14px;font-weight:500;padding:0 8px;white-space:nowrap}
-.seg button[aria-pressed="true"]{background:var(--bg-3);color:var(--ink-hi)}
+/* ══════════ segmented control — the one option picker ══════════ */
+.seg{display:flex;gap:var(--s-1);padding:var(--s-1);border-radius:var(--r-pill);background:var(--wash)}
+.seg button{flex:1;min-height:0;height:var(--h-nav);padding:0 var(--s-4);border:0;border-radius:var(--r-pill);
+  background:transparent;color:var(--ink-4);font-size:13px;font-weight:500;white-space:nowrap}
+.seg button:active:not(:disabled){scale:var(--press-chip)}
+.seg button[aria-pressed="true"]{background:var(--elev);color:var(--ink);box-shadow:var(--shadow-1)}
 .seg button:focus-visible{outline-offset:-2px}
-.fld{margin-bottom:var(--gap-row)}
-.pickers{margin-bottom:8px}
-.pickrow{display:grid;gap:var(--gap-row);grid-template-columns:1.55fr 1fr}
+.fld{margin-bottom:var(--s-6)}
+.pickers{margin-bottom:var(--s-4)}
+.pickrow{display:grid;gap:var(--s-6);grid-template-columns:1.55fr 1fr}
 
-/* ══════════ control rows: label left, value right ══════════ */
-.crow{display:flex;align-items:center;gap:10px;min-height:var(--row-h);
-  background:var(--bg-2);border-radius:var(--r-md);
-  padding:4px 6px 4px var(--pad-control);margin-bottom:var(--gap-row)}
+/* ══════════ control rows: label left, tabular value right ══════════ */
+.crow{display:flex;align-items:center;gap:var(--s-5);min-height:var(--h-row);
+  background:var(--wash);border-radius:var(--r-inner);
+  padding:var(--s-1) var(--s-2) var(--s-1) var(--s-7);margin-bottom:var(--s-3)}
 .crow label{flex:1 1 auto;min-width:0;margin:0}
-.crow input,.crow select{flex:0 0 auto;width:108px;min-height:40px;
-  background:transparent;border-radius:9px;padding:0 10px;text-align:right}
+.crow input,.crow select{flex:0 0 auto;width:108px;min-height:var(--h-field);
+  background:transparent;border-radius:var(--r-bar);padding:0 var(--s-5);text-align:right}
 
-.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bar{display:flex;gap:var(--s-4);flex-wrap:wrap;align-items:center;margin-bottom:var(--s-7)}
 .bar select{flex:1 1 170px;min-width:0}
-.quotebar{margin:24px 0 0;padding-top:16px;border-top:1px solid var(--hairline);margin-bottom:0}
+.quotebar{margin:var(--s-9) 0 0;padding-top:var(--s-7);border-top:1px solid var(--hairline);margin-bottom:0}
 .quotebar select{flex:0 1 200px}
 fieldset{border:0;padding:0;margin:0;min-width:0}
-legend{padding:0;margin-bottom:5px;font-size:12.5px;color:var(--ink-low)}
+legend{padding:0;margin-bottom:5px;font-size:13px;color:var(--ink-4)}
 
-/* ══════════ checklist row — no switches in this system ══════════ */
-.check{display:flex;gap:14px;align-items:center;margin:0;padding:4px 0;min-height:52px;
-  font-size:15px;color:var(--ink-mid);cursor:pointer}
+/* ══════════ boolean rows — Pumice switch, drawn on the native checkbox ══════════ */
+.check{display:flex;gap:var(--s-7);align-items:center;margin:0;padding:var(--s-2) 0;min-height:52px;
+  font-size:15px;color:var(--ink-2);cursor:pointer}
 .check+.check{border-top:1px solid var(--hairline)}
-.check input{appearance:none;-webkit-appearance:none;flex:0 0 auto;
-  width:24px;height:24px;min-height:24px;margin:0;padding:0;border-radius:7px;
-  background:var(--bg-2);border:1px solid var(--hairline);cursor:pointer;
-  background-repeat:no-repeat;background-position:center;background-size:14px}
-.check input:checked{background-color:var(--bg-3);border-color:transparent;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' fill='%23f2f2f2'%3E%3Cpath d='M229.66 77.66l-128 128a8 8 0 0 1-11.32 0l-56-56a8 8 0 0 1 11.32-11.32L96 188.69 218.34 66.34a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E")}
-.check .eff{margin-left:auto}
+.check input{order:2;margin-left:auto;appearance:none;-webkit-appearance:none;flex:none;
+  width:50px;height:var(--h-switch);min-height:0;padding:0;border-radius:var(--r-pill);cursor:pointer;
+  --knob:var(--elev);
+  background:rgba(var(--ink-rgb),.16) radial-gradient(circle,var(--knob) 11.5px,transparent 12px) no-repeat 0 0/30px 30px;
+  transition:background-color 200ms,background-position var(--t-open) var(--morph-ease)}
+.check input:checked{--knob:var(--on-ink);background-color:var(--ink);background-position:20px 0}
+.check .eff{order:1;margin-left:auto}
+.check:has(.eff) input{margin-left:0}
 
 /* ══════════ quote lines & rate card rows ══════════ */
-.lines{display:grid;gap:8px;margin-bottom:14px}
-.lines>div{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0;min-height:var(--row-h);
-  background:var(--bg-2);border-radius:var(--r-md);padding:4px 6px 4px var(--pad-control)}
+.lines{display:grid;gap:var(--s-3);margin-bottom:var(--s-7)}
+.lines>div{display:flex;flex-wrap:wrap;gap:var(--s-4);align-items:center;min-width:0;min-height:var(--h-row);
+  background:var(--wash);border-radius:var(--r-inner);padding:var(--s-1) var(--s-2) var(--s-1) var(--s-7)}
 .lines label{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;
-  gap:2px 10px;flex:1;min-width:0;margin:0;color:var(--ink-mid);font-size:15px}
-.lines label span{color:var(--ink-low);font-size:13px;white-space:nowrap}
-.lines label span.bad{color:var(--ink-hi);font-weight:600}
-.lines input{flex:0 0 auto;width:76px;min-height:40px;background:transparent;
-  border-radius:9px;padding:0 10px;text-align:right}
+  gap:2px 10px;flex:1;min-width:0;margin:0;color:var(--ink-2);font-size:15px}
+.lines label span{color:var(--ink-4);font-size:13px;white-space:nowrap}
+.lines label span.bad{color:var(--ink);font-weight:500}
+.lines input{flex:0 0 auto;width:76px;min-height:var(--h-field);background:transparent;
+  border-radius:var(--r-bar);padding:0 var(--s-5);text-align:right}
 .lines .lbl{flex:1 1 90px;width:auto;min-width:0;text-align:left}
 .lines .rt{width:92px}
-/* a one-off line is three editable cells — recess them so their bounds read on bg-2 */
-.lines div:has(.lbl) input{background:var(--bg-1)}
+/* a one-off line is three editable cells — lift them onto the elevated sheet so their bounds read */
+.lines div:has(.lbl){padding-left:var(--s-2)}
+.lines div:has(.lbl) input{background:var(--elev)}
 
 .rrow,.cols-head{display:grid;grid-template-columns:minmax(0,1fr) 104px 84px 40px;
-  gap:8px;align-items:center}
-.rrow{background:var(--bg-2);border-radius:var(--r-md);min-height:var(--row-h);
-  padding:4px 6px 4px var(--pad-control);margin-bottom:8px}
-.cols-head{padding:0 6px 6px var(--pad-control);font-size:12px;font-weight:500;color:var(--ink-low)}
+  gap:var(--s-4);align-items:center}
+.rrow{background:var(--wash);border-radius:var(--r-inner);min-height:var(--h-row);
+  padding:var(--s-1) var(--s-2) var(--s-1) var(--s-7);margin-bottom:var(--s-3)}
+.cols-head{padding:0 var(--s-2) var(--s-3) var(--s-7);font-size:12px;font-weight:500;color:var(--ink-4)}
 .cols-head span:nth-child(2){text-align:right;padding-right:10px}
-.rrow input,.rrow select{width:100%;min-height:40px;background:transparent;
-  border-radius:9px;padding:0 10px}
+.rrow input,.rrow select{width:100%;min-height:var(--h-field);background:transparent;
+  border-radius:var(--r-bar);padding:0 var(--s-5)}
 .rrow input[data-f=hourly]{text-align:right}
 .rrow select{background-position:right 8px center;padding-right:28px}
 
-.del{flex:0 0 auto;width:40px;height:40px;min-height:40px;padding:0;justify-content:center;
-  border-radius:10px;background:transparent;color:var(--ink-low)}
+/* icon button (Pumice .tool): ink-3 at rest, wash grows in on hover */
+.del{flex:0 0 auto;width:var(--h-nav);height:var(--h-nav);min-height:0;padding:0;
+  border-radius:var(--r-pill);background:transparent;color:var(--ink-3)}
+.del .ic{width:var(--icon);height:var(--icon)}
+.del:active:not(:disabled){scale:var(--press-icon)}
 
 /* ══════════ breakdown ══════════ */
-table{width:100%;border-collapse:collapse}
-td{padding:5px 0;vertical-align:baseline;color:var(--ink-mid)}
-td+td{text-align:right;white-space:nowrap;padding-left:14px;color:var(--ink-hi);font-weight:500}
-tr.sub td,tr.sub td+td{padding:2px 0 2px 16px;color:var(--ink-low);font-size:13px;font-weight:400}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+td{padding:5px 0;vertical-align:baseline;color:var(--ink-2)}
+td+td{text-align:right;white-space:nowrap;padding-left:14px;color:var(--ink);font-weight:500}
+tr.sub td,tr.sub td+td{padding:2px 0 2px 16px;color:var(--ink-4);font-size:13px;font-weight:400}
 tr.sub td:first-child{white-space:nowrap}
 tr.sub td+td{padding-left:14px}
 tr.rule td{border-top:1px solid var(--hairline);padding-top:14px}
-tr.total td{padding-top:14px;font-size:15px;font-weight:500}
-tr.total td+td{font-size:31px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
-tr.muted td,tr.muted td+td{color:var(--ink-low);font-size:13px;font-weight:400}
-tr.retainer-key td{font-size:15px;font-weight:500}
-tr.retainer-key td+td{font-size:22px;font-weight:650;letter-spacing:-.015em;line-height:1.1}
-.good,.warn,.bad{color:var(--ink-hi)}
-.hint.bad{color:var(--ink-hi);font-weight:500}
+tr.total td{padding-top:14px;font-size:15px;font-weight:500;color:var(--ink)}
+tr.total td+td{font-size:40px;font-weight:500;letter-spacing:-.02em;line-height:1.1}
+tr.muted td,tr.muted td+td{color:var(--ink-4);font-size:13px;font-weight:400}
+tr.retainer-key td{font-size:15px;font-weight:500;color:var(--ink)}
+tr.retainer-key td+td{font-size:26px;font-weight:500;letter-spacing:-.01em;line-height:1.2}
+.good,.warn,.bad{color:var(--ink)}
+.hint.bad{color:var(--ink);font-weight:500}
 
-/* the verdict is the reason this tool exists. Pass speaks at control volume;
-   a failing verdict borrows the inverse pair — the loudest voice the system has. */
-.margin-line{display:flex;align-items:flex-start;gap:10px;margin:0 0 16px;
-  padding:13px var(--pad-control);border-radius:var(--r-md);
-  font-size:15px;font-weight:600;letter-spacing:-.005em;
-  background:var(--bg-2);color:var(--ink-hi)}
-.margin-line.warn,.margin-line.bad{background:var(--inverse-bg);color:var(--inverse-ink)}
-.margin-line small{font-size:inherit;font-weight:500;opacity:.72}
-.margin-line .ic{width:20px;height:20px;margin-top:1px}
-.copyrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+/* the verdict is the reason this tool exists. Pass sits on a quiet wash;
+   a failing verdict takes the ink fill — the loudest voice the system has. */
+.margin-line{display:flex;align-items:flex-start;gap:var(--s-5);margin:0 0 var(--s-7);
+  padding:var(--s-6) var(--s-7);border-radius:var(--r-inner);
+  font-size:15px;line-height:1.4;font-weight:500;
+  background:var(--wash);color:var(--ink)}
+.margin-line.warn,.margin-line.bad{background:var(--ink);color:var(--on-ink)}
+.margin-line small{font-size:inherit;font-weight:400;opacity:.72}
+.margin-line .ic{width:var(--icon);height:var(--icon);margin-top:1px}
+.copyrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s-4);margin-top:var(--s-7)}
 
 /* ══════════ footer ══════════ */
-footer{max-width:1060px;margin:0 auto;padding:8px 24px 56px;font-size:13px;color:var(--ink-low)}
-footer a{color:var(--ink-low);font-weight:500;display:inline-flex;align-items:center;min-height:24px}
-footer a.nudge{color:var(--ink-hi);font-weight:600;text-decoration-color:var(--ink-low)}
-.hint button{min-height:34px;padding:0 12px;font-size:13px;border-radius:var(--r-sm)}
-pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
-  white-space:pre-wrap;color:var(--ink-low)}
+footer{max-width:1060px;margin:0 auto;padding:var(--s-4) var(--s-9) var(--s-12);font-size:13px;color:var(--ink-4)}
+footer a{color:var(--ink-4);font-weight:500;display:inline-flex;align-items:center;min-height:24px}
+footer a.nudge{color:var(--ink);text-decoration-color:var(--ink-4)}
+.hint button{min-height:var(--h-chip);padding:0 14px;font-size:13px}
+pre{font:inherit;font-size:12px;white-space:pre-wrap;color:var(--ink-4)}
 
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
   clip:rect(0,0,0,0);white-space:nowrap;border:0}
-#saveStatus{min-height:20px;margin:10px 0 0;font-size:13px;color:var(--ink-low)}
+#saveStatus{min-height:20px;margin:var(--s-5) 0 0;font-size:13px;color:var(--ink-4)}
 #toast{position:fixed;left:50%;bottom:24px;z-index:50;max-width:min(420px,calc(100vw - 32px));
   transform:translate(-50%,10px);opacity:0;pointer-events:none;padding:11px 18px;
-  border-radius:999px;background:var(--inverse-bg);color:var(--inverse-ink);
-  font-size:14px;font-weight:600;
-  transition:opacity var(--t-med) var(--ease),transform var(--t-med) var(--ease)}
+  border-radius:var(--r-pill);background:var(--ink);color:var(--on-ink);box-shadow:var(--float);
+  font-size:14px;font-weight:500;
+  transition:opacity var(--t-fade),transform var(--t-move) var(--spring)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-dialog{width:min(400px,calc(100vw - 32px));border:1px solid var(--hairline);
-  border-radius:var(--r-xl);padding:0;color:var(--ink-mid);background:var(--bg-1)}
-dialog::backdrop{background:rgba(0,0,0,.62)}
-.dialog-body{padding:24px}
-.dialog-body h2{margin:0 0 8px;font-size:20px;font-weight:700;letter-spacing:-.01em;text-align:center}
-.dialog-body p{margin:0 0 18px;color:var(--ink-low);font-size:14px;text-align:center}
-.dialog-body label{margin-bottom:6px;font-size:13px;color:var(--ink-low)}
-.dialog-body input{width:100%;margin-bottom:18px}
-.dialog-actions{display:flex;gap:10px}
+dialog{width:min(400px,calc(100vw - 32px));border:0;
+  border-radius:var(--r-card);padding:0;color:var(--ink-2);background:var(--elev);box-shadow:var(--float)}
+dialog::backdrop{background:var(--veil);backdrop-filter:blur(12px) saturate(1.3);-webkit-backdrop-filter:blur(12px) saturate(1.3)}
+.dialog-body{padding:var(--s-9)}
+.dialog-body h2{margin:0 0 var(--s-4);font-size:17px;line-height:1.25;font-weight:500;letter-spacing:-.02em;text-align:center}
+.dialog-body p{margin:0 0 var(--s-8);color:var(--ink-4);font-size:14px;text-align:center}
+.dialog-body label{margin-bottom:6px;font-size:13px;color:var(--ink-4)}
+.dialog-body input{width:100%;margin-bottom:var(--s-8)}
+.dialog-actions{display:flex;gap:var(--s-5)}
 .dialog-actions button{flex:1}
 
 [hidden]{display:none!important}
@@ -229,20 +233,26 @@ body.mode-retainer span.only-retainer{display:inline}
 body.dir-budget div.only-budget{display:block}
 body:not(.cur-SEK) p.only-foreign{display:block}
 
-/* ══════════ hover — state is one step up the ladder ══════════ */
+/* ══════════ hover — one wash step up, ink to full ══════════ */
 @media (hover:hover){
   a:hover{text-decoration-color:currentColor}
-  button:where(:hover:not(:disabled)){background:var(--bg-3);color:var(--ink-hi)}
-  button.primary:hover:not(:disabled),button.bad:hover:not(:disabled){
-    background:var(--inverse-bg);color:var(--inverse-ink);filter:brightness(.9)}
-  button.dashed:hover{background:transparent;color:var(--ink-hi);
-    border-color:rgba(255,255,255,.4)}
-  button.text:hover{background:transparent;color:var(--ink-hi)}
-  .seg button:hover:not([aria-pressed="true"]){background:transparent;color:var(--ink-mid)}
-  .del:hover{background:var(--bg-3);color:var(--ink-hi)}
-  input:not([type=checkbox]):not([type=file]):hover,select:hover:not(:disabled){
-    background-color:var(--bg-3)}
-  .check input:hover:not(:checked){background-color:var(--bg-3)}
+  button:where(:hover:not(:disabled)){background:var(--wash-2)}
+  button.primary:hover:not(:disabled),button.bad:hover:not(:disabled){background:var(--ink);opacity:.86}
+  button.dashed:hover{background:rgba(var(--ink-rgb),.05);color:var(--ink);
+    box-shadow:inset 0 0 0 1px rgba(var(--ink-rgb),.28)}
+  button.text:hover{background:transparent;color:var(--ink)}
+  .seg button:hover:not([aria-pressed="true"]){background:transparent;color:var(--ink)}
+  .del:hover{background:rgba(var(--ink-rgb),.08);color:var(--ink)}
+  input:not([type=checkbox]):not([type=file]):hover:not(:focus),select:hover:not(:disabled):not(:focus){
+    background-color:var(--wash-2)}
+}
+
+/* ══════════ touch — 44px targets on coarse pointers ══════════ */
+@media (pointer:coarse){
+  input:not([type=checkbox]),select,button{min-height:var(--h-touch)}
+  .seg button{height:var(--h-touch)}
+  .del{width:var(--h-touch);height:var(--h-touch)}
+  .crow input,.crow select,.lines input,.rrow input,.rrow select{min-height:var(--h-touch)}
 }
 
 /* ══════════ accessibility preferences ══════════ */
@@ -251,9 +261,7 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   #quoteView,#settingsView{--from:0px}
 }
 @media (prefers-contrast:more){
-  :root{--hairline:rgba(255,255,255,.3);--ink-low:#a9a9a9;--ink-faint:#8a8a8a;
-    --bg-2:#262626;--bg-3:#343434}
-  input:not([type=checkbox]),select,button{box-shadow:inset 0 0 0 1px var(--hairline)}
+  input:not([type=checkbox]),select,button{box-shadow:var(--ring)}
   button.primary,button.bad{box-shadow:none}
 }
 
@@ -262,12 +270,11 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   #quoteView>section:last-child{order:-1}
 }
 @media (max-width:600px){
-  main{padding-inline:14px}
-  header{margin-inline:-14px;padding-inline:14px}
-  section{padding:16px;border-radius:var(--r-lg)}
+  main{padding-inline:var(--s-7)}
+  header{margin-inline:calc(-1 * var(--s-7));padding-inline:var(--s-7)}
+  footer{padding-inline:var(--s-7)}
+  section{padding:var(--s-8) var(--s-7)}
   .pickrow{grid-template-columns:1fr}
-  .del{width:44px;height:44px;min-height:44px}
-  .lines input,.rrow input,.rrow select{min-height:44px}
   #quote tbody{display:block}
   #quote tr{display:grid;grid-template-columns:minmax(0,1fr) max-content;column-gap:10px}
   #quote td{display:block;min-width:0}
@@ -275,8 +282,7 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   #quote tr.sub{grid-template-columns:1fr}
   #quote tr.sub td{padding-left:0}
   #quote tr.sub td:first-child{white-space:normal}
-  #quote tr.total td+td{font-size:26px}
-  #quote tr.retainer-key td+td{font-size:20px}
+  #quote tr.total td+td{font-size:30px;line-height:1.08;letter-spacing:-.012em}
 }
 @media (max-width:520px){
   .lines .lbl{flex:1 1 100%}
@@ -297,36 +303,28 @@ body:not(.cur-SEK) p.only-foreign{display:block}
 
 <body>
 <!--
-THESIS: A pricing workbench as a monochrome control console; the margin verdict, not the
-price, is the loudest element. Refuses the pastel SaaS-calculator card collage.
-OWN-WORLD: Graphite Console. Surface ladder #0f0f0f->#3a3a3a, ink #f2f2f2/#b3b3b3/#8a8a8a/
-#5f5f5f, 8% hairlines, white<->near-black inverse pair as the only accent. Geist, tabular
-numerals, 48px control rows, segmented pickers, tracked-caps section labels, Phosphor icons,
-120/180ms ease.
+THESIS: A pricing workbench on the Pumice system; the margin verdict, not the price, is the
+loudest element.
+SYSTEM: Pumice (https://granqvistsanna-web.github.io/pumice/). Tokens load from tokens.css;
+this page only adds rules. Inter 400/500, tabular numerals, pill controls on ink washes,
+28px cards, segmented pickers, switches for booleans, Lucide-geometry icons, light-first
+with dark following the system.
 STORY: A consultant at a desk composes a defensible price, reads one verdict, copies text
 into a proposal.
-FIRST VIEWPORT: Hairline header; left, segmented Mode/Currency/Start-from over hour rows;
-right, the Breakdown panel led by the verdict row, arithmetic beneath, display-scale total,
-two copy actions.
-FORM: User-pinned world (Graphite Console study, captured from localhost:8942); a pinned
-brief beats the roll - no seed.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review,
-the verdict, and DESIGN.md
 -->
 
-<!-- Phosphor icons (MIT), 256 grid, fill weight where mass helps (verdicts, back caret,
-     trash, sliders), regular weight for bare marks (x, plus, check) so they read as glyphs,
-     not chips. All inlined: the FX call stays the app's only network request. -->
+<!-- Icons: Lucide geometry (ISC), 24 grid, 2px round stroke, no fill. Inlined so the FX call
+     stays the app's only data request. -->
 <svg hidden aria-hidden="true">
-  <symbol id="i-sliders" viewBox="0 0 256 256"><path d="M32,80a8,8,0,0,1,8-8H77.17a28,28,0,0,1,53.66,0H216a8,8,0,0,1,0,16H130.83a28,28,0,0,1-53.66,0H40A8,8,0,0,1,32,80Zm184,88H194.83a28,28,0,0,0-53.66,0H40a8,8,0,0,0,0,16H141.17a28,28,0,0,0,53.66,0H216a8,8,0,0,0,0-16Z"/></symbol>
-  <symbol id="i-back" viewBox="0 0 256 256"><path d="M168,48V208a8,8,0,0,1-13.66,5.66l-80-80a8,8,0,0,1,0-11.32l80-80A8,8,0,0,1,168,48Z"/></symbol>
-  <symbol id="i-close" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
-  <symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z"/></symbol>
-  <symbol id="i-v-good" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
-  <symbol id="i-v-warn" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/></symbol>
-  <symbol id="i-v-bad" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,130.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-v-good" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-v-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-v-bad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
 </svg>
 
 <main>
