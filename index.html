@@ -129,16 +129,22 @@ button .ic{width:var(--icon-sm);height:var(--icon-sm)}
 fieldset{border:0;padding:0;margin:0;min-width:0}
 legend{padding:0;margin-bottom:5px;font-size:13px;color:var(--ink-4)}
 
-/* ══════════ boolean rows — Pumice switch, drawn on the native checkbox ══════════ */
+/* ══════════ boolean rows — Pumice liquid switch, drawn on the native checkbox ══════════ */
 .check{display:flex;gap:var(--s-7);align-items:center;margin:0;padding:var(--s-2) 0;min-height:52px;
   font-size:15px;color:var(--ink-2);cursor:pointer}
 .check+.check{border-top:1px solid var(--hairline)}
-.check input{order:2;margin-left:auto;appearance:none;-webkit-appearance:none;flex:none;
+.check input{order:2;margin-left:auto;appearance:none;-webkit-appearance:none;flex:none;position:relative;
   width:50px;height:var(--h-switch);min-height:0;padding:0;border-radius:var(--r-pill);cursor:pointer;
-  --knob:var(--thumb);
-  background:rgba(var(--ink-rgb),.16) radial-gradient(circle,var(--knob) 11.5px,transparent 12px) no-repeat 0 0/30px 30px;
-  transition:background-color 200ms,background-position var(--t-open) var(--morph-ease)}
-.check input:checked{--knob:var(--on-ink);background-color:var(--ink);background-position:20px 0}
+  --knob:var(--thumb);background:rgba(var(--ink-rgb),.16);transition:background-color 200ms}
+/* the leading edge leaves first and the trailing one follows, so the knob stretches as it travels */
+.check input::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;right:23px;border-radius:inherit;
+  background:var(--knob);box-shadow:var(--shadow-1);
+  transition:left 300ms var(--spring-soft),right 380ms var(--spring-soft) 70ms,background-color 200ms}
+.check input:checked{--knob:var(--on-ink);background-color:var(--ink)}
+.check input:checked::before{left:23px;right:3px;
+  transition:right 300ms var(--spring-soft),left 380ms var(--spring-soft) 70ms,background-color 200ms}
+.check input:active:not(:checked)::before{right:17px}
+.check input:checked:active::before{left:17px}
 .check .eff{order:1;margin-left:auto}
 .check:has(.eff) input{margin-left:0}
 
