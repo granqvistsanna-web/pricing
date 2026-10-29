@@ -25,16 +25,17 @@ body{margin:0;background:var(--bg);color:var(--ink-2);
   font:400 15px/1.5 var(--font-ui);font-feature-settings:"cv11","ss01";
   font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
   transition:background-color var(--t-fade),color var(--t-color)}
-main{margin:0 auto;padding:0 var(--s-9) var(--s-12)}
+/* the bar runs full width; the quote caps at --w-wide */
+main,footer{margin:0 auto;max-width:calc(var(--w-wide) + 2 * var(--gutter));padding-inline:max(var(--gutter),env(safe-area-inset-left,0px)) max(var(--gutter),env(safe-area-inset-right,0px))}
+main{padding-bottom:var(--s-12)}
 
 /* sticky frosted bar */
 /* the Toolbox mascot stands in for a hero here: bigger, but inside the bar */
 header .tb-home{--tb-size:40px}
 header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:var(--s-7);
-  margin:0 calc(-1 * var(--s-9)) var(--s-9);padding:var(--s-5) var(--s-9);min-height:var(--h-bar);
-  background:var(--frost);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);
-  /* full-bleed fill past main's max-width without changing the markup */
-  box-shadow:0 0 0 100vmax var(--frost);clip-path:inset(0 -100vmax)}
+  margin-bottom:var(--s-9);min-height:var(--h-topbar);
+  padding:var(--s-3) max(var(--gutter),env(safe-area-inset-right,0px)) var(--s-3) max(var(--gutter),env(safe-area-inset-left,0px));
+  background:var(--frost);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px)}
 .brand{flex:1;min-width:0}
 h1{margin:0;font-size:15px;font-weight:500;line-height:1.4;color:var(--ink)}
 #quoteLabel{margin:0;font-size:13px;line-height:1.5;color:var(--ink-4);
@@ -45,7 +46,7 @@ h1{margin:0;font-size:15px;font-weight:500;line-height:1.4;color:var(--ink)}
 .cols{display:grid;gap:var(--panel-gap);grid-template-columns:1fr}
 @media (min-width:860px){
   .cols{grid-template-columns:minmax(0,1fr) minmax(0,.94fr);align-items:start}
-  @media (min-height:780px){#quoteView>section:last-child{position:sticky;top:calc(var(--h-bar) + var(--s-7))}}
+  @media (min-height:780px){#quoteView>section:last-child{position:sticky;top:calc(var(--h-topbar) + var(--s-7))}}
 }
 section{background:var(--surface);border-radius:var(--r-card);padding:var(--s-9);min-width:0}
 
@@ -202,7 +203,7 @@ tr.retainer-key td+td{font-size:26px;font-weight:500;letter-spacing:-.01em;line-
 .copyrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s-4);margin-top:var(--s-7)}
 
 /* ══════════ footer ══════════ */
-footer{margin:0 auto;padding:var(--s-4) var(--s-9) var(--s-12);font-size:13px;color:var(--ink-4)}
+footer{padding-top:var(--s-4);padding-bottom:var(--s-12);font-size:13px;color:var(--ink-4)}
 footer a{color:var(--ink-4);font-weight:500;display:inline-flex;align-items:center;min-height:24px}
 footer a.nudge{color:var(--ink);text-decoration-color:var(--ink-4)}
 .hint button{min-height:var(--h-chip);padding:0 14px;font-size:13px}
@@ -273,9 +274,6 @@ body:not(.cur-SEK) p.only-foreign{display:block}
   #quoteView>section:last-child{order:-1}
 }
 @media (max-width:600px){
-  main{padding-inline:var(--s-7)}
-  header{margin-inline:calc(-1 * var(--s-7));padding-inline:var(--s-7)}
-  footer{padding-inline:var(--s-7)}
   section{padding:var(--s-8) var(--s-7)}
   .pickrow{grid-template-columns:1fr}
   #quote tbody{display:block}
@@ -330,7 +328,6 @@ into a proposal.
   <symbol id="i-v-bad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
 </svg>
 
-<main>
 <header>
   <a href="https://granqvistsanna-web.github.io/" data-toolbox-home>Toolbox</a> <span class="tb-sep" aria-hidden="true">/</span>
   <div class="brand">
@@ -339,6 +336,7 @@ into a proposal.
   </div>
   <button id="viewToggle"></button>
 </header>
+<main>
 
 <!-- ───────────────── quote view ───────────────── -->
 <div id="quoteView" class="cols">
